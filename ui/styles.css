@@ -1,0 +1,520 @@
+/* ============================================
+   Minecraft Server Manager — Textual CSS
+   Premium Dark Theme
+   ============================================ */
+
+/* ── Global ─────────────────────────────────── */
+
+Screen {
+    background: #0d1117;
+    color: #e6edf3;
+}
+
+/* ── App Header Status Bar ──────────────────── */
+
+#app-status-bar {
+    dock: top;
+    height: 1;
+    background: #161b22;
+    color: #8b949e;
+    padding: 0 2;
+}
+
+#app-status-bar .status-item {
+    margin: 0 1;
+}
+
+.status-running {
+    color: #3fb950;
+    text-style: bold;
+}
+
+.status-stopped {
+    color: #f85149;
+    text-style: bold;
+}
+
+.status-warning {
+    color: #d29922;
+    text-style: bold;
+}
+
+.status-ok {
+    color: #3fb950;
+}
+
+.status-info {
+    color: #58a6ff;
+}
+
+/* ── Tab Navigation ────────────────────────── */
+
+TabbedContent {
+    height: 1fr;
+}
+
+TabPane {
+    padding: 1;
+}
+
+ContentSwitcher {
+    height: 1fr;
+}
+
+/* ── Panels ─────────────────────────────────── */
+
+.panel {
+    border: solid #30363d;
+    padding: 1 2;
+    margin: 0 0 1 0;
+    background: #0d1117;
+}
+
+.panel-title {
+    text-style: bold;
+    color: #58a6ff;
+    margin-bottom: 1;
+}
+
+.panel-glow {
+    border: solid #58a6ff;
+    padding: 1 2;
+    margin: 0 0 1 0;
+    background: #161b22;
+}
+
+.sub-panel {
+    border: solid #21262d;
+    padding: 1;
+    margin: 0;
+}
+
+/* ── Dashboard Layout ──────────────────────── */
+
+#dashboard-main {
+    layout: grid;
+    grid-size: 2 1;
+    grid-gutter: 1;
+    height: 1fr;
+}
+
+#dash-left {
+    width: 1fr;
+}
+
+#dash-right {
+    width: 1fr;
+}
+
+#status-panel {
+    height: auto;
+    min-height: 5;
+    border: solid #238636;
+    padding: 1 2;
+    margin-bottom: 1;
+}
+
+#console-panel {
+    height: 1fr;
+    border: solid #30363d;
+    padding: 1;
+}
+
+#resources-panel {
+    height: auto;
+    border: solid #30363d;
+    padding: 1;
+}
+
+#actions-panel {
+    height: auto;
+    min-height: 3;
+    border: solid #30363d;
+    padding: 1;
+}
+
+/* ── Quick Stats Dashboard ──────────────────── */
+
+#quick-stats {
+    layout: horizontal;
+    height: auto;
+    margin-bottom: 1;
+}
+
+.stat-card {
+    width: 1fr;
+    height: auto;
+    min-height: 3;
+    border: solid #21262d;
+    padding: 0 1;
+    margin: 0 1 0 0;
+    content-align: center middle;
+}
+
+.stat-value {
+    text-style: bold;
+    color: #58a6ff;
+    text-align: center;
+}
+
+.stat-label {
+    color: #8b949e;
+    text-align: center;
+}
+
+/* ── Server Controls ───────────────────────── */
+
+#server-controls {
+    layout: horizontal;
+    height: auto;
+    padding: 0;
+    margin-bottom: 1;
+}
+
+/* ── Buttons ────────────────────────────────── */
+
+.action-btn {
+    min-width: 14;
+    margin: 0 1 0 0;
+}
+
+.btn-start {
+    background: #238636;
+    color: #ffffff;
+}
+
+.btn-start:hover {
+    background: #2ea043;
+}
+
+.btn-stop {
+    background: #da3633;
+    color: #ffffff;
+}
+
+.btn-stop:hover {
+    background: #f85149;
+}
+
+.btn-primary {
+    background: #1f6feb;
+    color: #ffffff;
+}
+
+.btn-primary:hover {
+    background: #388bfd;
+}
+
+.btn-warning {
+    background: #9e6a03;
+    color: #ffffff;
+}
+
+.btn-warning:hover {
+    background: #d29922;
+}
+
+.btn-secondary {
+    background: #21262d;
+    color: #c9d1d9;
+    border: solid #30363d;
+}
+
+.btn-secondary:hover {
+    background: #30363d;
+}
+
+.btn-small {
+    min-width: 10;
+    height: 3;
+}
+
+/* ── Progress Bars ──────────────────────────── */
+
+.resource-bar {
+    margin: 0 1;
+    height: 1;
+}
+
+ProgressBar Bar>.bar--bar {
+    color: #58a6ff;
+}
+
+ProgressBar Bar>.bar--complete {
+    color: #3fb950;
+}
+
+/* ── Data Tables ────────────────────────────── */
+
+.data-table {
+    height: 1fr;
+    margin: 1 0;
+}
+
+DataTable {
+    height: 1fr;
+}
+
+DataTable>.datatable--header {
+    background: #161b22;
+    color: #58a6ff;
+    text-style: bold;
+}
+
+DataTable>.datatable--cursor {
+    background: #1f6feb;
+    color: #ffffff;
+}
+
+/* ── Log View ───────────────────────────────── */
+
+#log-view {
+    height: 1fr;
+    min-height: 8;
+    border: solid #21262d;
+    padding: 0 1;
+    background: #010409;
+}
+
+.log-line {
+    color: #8b949e;
+}
+
+.log-line-info {
+    color: #c9d1d9;
+}
+
+.log-line-warn {
+    color: #d29922;
+}
+
+.log-line-error {
+    color: #f85149;
+}
+
+/* ── Settings Form ─────────────────────────── */
+
+.settings-form {
+    padding: 1;
+    height: auto;
+}
+
+.settings-row {
+    layout: horizontal;
+    height: auto;
+    margin-bottom: 1;
+}
+
+.settings-label {
+    width: 22;
+    padding: 1 1 0 0;
+    color: #c9d1d9;
+}
+
+.settings-input {
+    width: 1fr;
+}
+
+.settings-group {
+    border: solid #21262d;
+    padding: 1;
+    margin-bottom: 1;
+}
+
+.settings-group-title {
+    text-style: bold;
+    color: #58a6ff;
+    margin-bottom: 1;
+}
+
+/* ── Plugin Panel ───────────────────────────── */
+
+#plugin-search-row {
+    dock: top;
+    height: auto;
+    padding: 0;
+    margin-bottom: 1;
+}
+
+#plugin-list {
+    height: 1fr;
+    border: solid #30363d;
+}
+
+#plugin-details {
+    height: auto;
+    max-height: 12;
+    padding: 1;
+    border: solid #21262d;
+    background: #161b22;
+}
+
+#plugin-progress {
+    height: auto;
+    margin: 1 0;
+}
+
+/* ── File Editor ────────────────────────────── */
+
+#editor-layout {
+    layout: horizontal;
+    height: 1fr;
+}
+
+#file-tree {
+    width: 30;
+    border: solid #30363d;
+    padding: 1;
+}
+
+#editor-area {
+    width: 1fr;
+    height: 1fr;
+    border: solid #30363d;
+    padding: 0 1;
+}
+
+#editor-statusbar {
+    dock: bottom;
+    height: 1;
+    background: #161b22;
+    padding: 0 2;
+    color: #8b949e;
+}
+
+#editor-buttons {
+    dock: bottom;
+    height: auto;
+    padding: 1 0 0 0;
+}
+
+/* ── Java Panel ─────────────────────────────── */
+
+#java-info {
+    height: auto;
+    border: solid #21262d;
+    padding: 1;
+    margin-bottom: 1;
+    background: #161b22;
+}
+
+#java-list {
+    height: 1fr;
+    border: solid #30363d;
+    margin: 0 0 1 0;
+}
+
+#java-actions {
+    dock: bottom;
+    height: auto;
+    padding: 1 0 0 0;
+}
+
+#system-info {
+    border: solid #21262d;
+    padding: 1;
+    margin-top: 1;
+    background: #161b22;
+}
+
+/* ── EULA Panel ─────────────────────────────── */
+
+#eula-status {
+    height: auto;
+    border: solid #21262d;
+    padding: 1;
+    margin-bottom: 1;
+    background: #161b22;
+}
+
+.eula-accepted {
+    color: #3fb950;
+    text-style: bold;
+}
+
+.eula-pending {
+    color: #f85149;
+    text-style: bold;
+}
+
+#eula-text-container {
+    height: 1fr;
+    border: solid #30363d;
+    padding: 1;
+    overflow-y: auto;
+}
+
+#eula-text {
+    color: #8b949e;
+}
+
+#eula-actions {
+    height: auto;
+    padding: 1 0 0 0;
+}
+
+/* ── Modal Dialogs ──────────────────────────── */
+
+.modal-dialog {
+    width: 60;
+    height: auto;
+    max-height: 80%;
+    border: double #58a6ff;
+    padding: 2;
+    background: #161b22;
+}
+
+.modal-title {
+    text-style: bold;
+    text-align: center;
+    color: #58a6ff;
+    margin-bottom: 1;
+}
+
+ConfirmDialog {
+    align: center middle;
+}
+
+/* ── Notifications ──────────────────────────── */
+
+Toast {
+    background: #161b22;
+    border: solid #30363d;
+}
+
+/* ── Input Styling ──────────────────────────── */
+
+Input {
+    background: #0d1117;
+    border: solid #30363d;
+    color: #c9d1d9;
+}
+
+Input:focus {
+    border: solid #58a6ff;
+}
+
+/* ── Select Styling ─────────────────────────── */
+
+Select {
+    background: #0d1117;
+    border: solid #30363d;
+    color: #c9d1d9;
+}
+
+/* ── Switch Styling ─────────────────────────── */
+
+Switch {
+    background: #21262d;
+}
+
+/* ── Footer ─────────────────────────────────── */
+
+Footer {
+    background: #161b22;
+}
+
+FooterKey {
+    color: #58a6ff;
+    background: #21262d;
+}

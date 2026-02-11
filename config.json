@@ -1,0 +1,42 @@
+{
+  "server": {
+    "type": "paper",
+    "version": "1.20.1",
+    "ram": 2048,
+    "java_version": 17,
+    "eula_accepted": false,
+    "world_name": "world",
+    "difficulty": "normal",
+    "gamemode": "survival",
+    "pvp": true,
+    "max_players": 20,
+    "port": 25565,
+    "online_mode": true,
+    "view_distance": 10,
+    "simulation_distance": 10,
+    "motd": "A Minecraft Server"
+  },
+  "paths": {
+    "server_dir": "./server",
+    "plugins_dir": "./server/plugins",
+    "backup_dir": "./backups",
+    "logs_dir": "./server/logs",
+    "java_dir": "./java"
+  },
+  "jvm_flags": {
+    "default": "-XX:+UseG1GC -XX:MaxGCPauseMillis=200 -XX:+ParallelRefProcEnabled -XX:+UnlockExperimentalVMOptions -XX:+DisableExplicitGC -XX:+AlwaysPreTouch -XX:G1NewSizePercent=30 -XX:G1MaxNewSizePercent=40 -XX:G1HeapRegionSize=8M -XX:G1ReservePercent=20 -XX:G1HeapWastePercent=5 -XX:G1MixedGCCountTarget=4 -XX:InitiatingHeapOccupancyPercent=15 -XX:G1MixedGCLiveThresholdPercent=90 -XX:G1RSetUpdatingPauseTimePercent=5 -XX:SurvivorRatio=32 -XX:+PerfDisableSharedMem -XX:MaxTenuringThreshold=1",
+    "low_memory": "-XX:+UseSerialGC",
+    "high_performance": "-XX:+UseZGC -XX:+ZGenerational"
+  },
+  "remote": {
+    "enabled": false,
+    "host": "",
+    "port": 22,
+    "username": "",
+    "key_path": ""
+  },
+  "environment": {
+    "auto_detect": true,
+    "type": "local"
+  }
+}

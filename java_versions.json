@@ -1,0 +1,33 @@
+{
+    "installed": [],
+    "active": null,
+    "supported": {
+        "8": {
+            "mc_versions": [
+                "1.8.x",
+                "1.12.x"
+            ],
+            "download_url_template": "https://api.adoptium.net/v3/binary/latest/8/ga/{os}/{arch}/jdk/hotspot/normal/eclipse"
+        },
+        "11": {
+            "mc_versions": [
+                "1.12.x",
+                "1.16.x"
+            ],
+            "download_url_template": "https://api.adoptium.net/v3/binary/latest/11/ga/{os}/{arch}/jdk/hotspot/normal/eclipse"
+        },
+        "17": {
+            "mc_versions": [
+                "1.17.x",
+                "1.20.4"
+            ],
+            "download_url_template": "https://api.adoptium.net/v3/binary/latest/17/ga/{os}/{arch}/jdk/hotspot/normal/eclipse"
+        },
+        "21": {
+            "mc_versions": [
+                "1.20.5+"
+            ],
+            "download_url_template": "https://api.adoptium.net/v3/binary/latest/21/ga/{os}/{arch}/jdk/hotspot/normal/eclipse"
+        }
+    }
+}

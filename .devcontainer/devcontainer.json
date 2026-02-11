@@ -1,0 +1,40 @@
+{
+    "name": "Minecraft Server Manager",
+    "image": "mcr.microsoft.com/devcontainers/python:3.11-bullseye",
+    "features": {
+        "ghcr.io/devcontainers/features/java:1": {
+            "version": "17",
+            "installMaven": false,
+            "installGradle": false
+        }
+    },
+    "postCreateCommand": "pip install --upgrade pip && pip install -r requirements.txt",
+    "customizations": {
+        "vscode": {
+            "extensions": [
+                "ms-python.python",
+                "ms-python.vscode-pylance",
+                "ms-python.black-formatter",
+                "charliermarsh.ruff"
+            ],
+            "settings": {
+                "python.defaultInterpreterPath": "/usr/local/bin/python",
+                "python.linting.enabled": true,
+                "python.linting.pylintEnabled": false,
+                "python.formatting.provider": "black",
+                "editor.formatOnSave": true,
+                "terminal.integrated.defaultProfile.linux": "bash"
+            }
+        }
+    },
+    "forwardPorts": [
+        25565
+    ],
+    "portsAttributes": {
+        "25565": {
+            "label": "Minecraft Server",
+            "onAutoForward": "notify"
+        }
+    },
+    "remoteUser": "vscode"
+}
