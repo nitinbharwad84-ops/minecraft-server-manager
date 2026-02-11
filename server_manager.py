@@ -606,11 +606,11 @@ class ServerManager:
             f"-Xms{ram}M",
         ]
 
-        # Add JVM flags if any
         if jvm_flags_str.strip():
             cmd.extend(jvm_flags_str.split())
 
-        cmd.extend(["-jar", str(jar), "--nogui"])
+        # Use absolute path for JAR to avoid relative path issues in CWD
+        cmd.extend(["-jar", str(jar.resolve()), "--nogui"])
 
         logger.info("Starting server: %s", " ".join(cmd))
 
