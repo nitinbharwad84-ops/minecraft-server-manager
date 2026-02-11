@@ -116,10 +116,11 @@ def api_java_activate(version):
 def api_eula_status():
     """Check EULA status"""
     try:
-        result = sm.eula_manager.check_eula()
+        # Use check_eula_status() which returns bool
+        accepted = sm.eula_manager.check_eula_status()
         return jsonify({
-            'success': result.success,
-            'accepted': result.data.get('accepted', False) if result.success else False
+            'success': True,
+            'accepted': accepted
         })
     except Exception as e:
         return jsonify({'success': False, 'error': str(e)}), 500
@@ -128,10 +129,12 @@ def api_eula_status():
 def api_eula_accept():
     """Accept EULA"""
     try:
-        result = sm.eula_manager.accept_eula()
+        # Use auto_accept_eula() which returns EulaResult
+        result = sm.eula_manager.auto_accept_eula()
         return jsonify({
             'success': result.success,
-            'message': result.message
+            'message': result.message,
+            'error': result.error
         })
     except Exception as e:
         return jsonify({'success': False, 'error': str(e)}), 500
@@ -140,10 +143,11 @@ def api_eula_accept():
 def api_eula_decline():
     """Decline EULA"""
     try:
-        result = sm.eula_manager.decline_eula()
+        # Use decline() which returns bool
+        success = sm.eula_manager.decline()
         return jsonify({
-            'success': result.success,
-            'message': result.message
+            'success': success,
+            'message': 'EULA declined' if success else 'Failed to decline EULA'
         })
     except Exception as e:
         return jsonify({'success': False, 'error': str(e)}), 500
@@ -153,7 +157,31 @@ def api_server_start():
     """Start server"""
     try:
         result = sm.start_server()
-        return jsonify(result)
+        # Flask 3.1.0 handles dataclasses, but let's be safe
+        return jsonify({
+            'success': result.success,
+            'message': result.message,
+            'error': result.error,
+            'details': result.details
+        })
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+@app.route('/api/server/download', methods=['POST'])
+def api_server_download():
+    """Download server JAR"""
+    try:
+        # Use asyncio to run the async download method
+        import asyncio
+        async def _download():
+            async with aiohttp.ClientSession() as session:
+                return await sm.download_server(session)
+        
+        success = asyncio.run(_download())
+        return jsonify({
+            'success': success,
+            'message': 'Server JAR downloaded successfully' if success else 'Failed to download server JAR'
+        })
     except Exception as e:
         return jsonify({'success': False, 'error': str(e)}), 500
 
@@ -162,7 +190,12 @@ def api_server_stop():
     """Stop server"""
     try:
         result = sm.stop_server()
-        return jsonify(result)
+        return jsonify({
+            'success': result.success,
+            'message': result.message,
+            'error': result.error,
+            'details': result.details
+        })
     except Exception as e:
         return jsonify({'success': False, 'error': str(e)}), 500
 
@@ -171,7 +204,12 @@ def api_server_restart():
     """Restart server"""
     try:
         result = sm.restart_server()
-        return jsonify(result)
+        return jsonify({
+            'success': result.success,
+            'message': result.message,
+            'error': result.error,
+            'details': result.details
+        })
     except Exception as e:
         return jsonify({'success': False, 'error': str(e)}), 500
 
