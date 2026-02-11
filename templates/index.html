@@ -374,6 +374,40 @@
             </div>
 
             <div class="card">
+                <div class="card-title">🔗 Connect (Public Access)</div>
+                <div id="tunnel-status" class="alert alert-warning">
+                    Tunnel: <strong id="tunnel-state">Stopped</strong>
+                </div>
+
+                <div id="tunnel-actions">
+                    <button class="btn btn-primary" onclick="startTunnel()">🚀 Start Playit.gg Tunnel</button>
+                    <p style="margin-top: 10px; font-size: 13px; color: #666;">
+                        This creates a public IP so friends can join (no ngrok needed).
+                    </p>
+                </div>
+
+                <div id="claim-box"
+                    style="display: none; margin-top: 15px; padding: 15px; background: #e0f2fe; border-radius: 8px; border: 1px solid #bae6fd;">
+                    <h3 style="margin-bottom: 10px; color: #0369a1;">🔔 Action Required</h3>
+                    <p>Click this link to create your public IP:</p>
+                    <a id="claim-link" href="#" target="_blank"
+                        style="display: block; margin: 10px 0; font-weight: bold; color: #0284c7; word-break: break-all;"></a>
+                    <p style="font-size: 12px;">(You only need to do this once per session)</p>
+                </div>
+
+                <div id="tunnel-address-box"
+                    style="display: none; margin-top: 15px; padding: 15px; background: #dcfce7; border-radius: 8px; border: 1px solid #bbf7d0;">
+                    <h3 style="margin-bottom: 10px; color: #15803d;">🌍 Public Server Address</h3>
+                    <div style="display: flex; gap: 10px; align-items: center;">
+                        <input type="text" id="tunnel-address" readonly
+                            style="margin: 0; font-family: monospace; font-weight: bold;"
+                            value="Waiting for address...">
+                        <button class="btn btn-success" onclick="copyAddress()" style="margin: 0;">Copy</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card">
                 <div class="card-title">📊 System Resources</div>
                 <label>CPU Usage</label>
                 <div class="progress-bar">
@@ -848,6 +882,69 @@
                     }
                     container.scrollTop = container.scrollHeight;
                 });
+        }
+
+        // Tunnel Logic
+        function startTunnel() {
+            const btn = event.target;
+            btn.disabled = true;
+            btn.textContent = 'Starting...';
+
+            fetch('/api/tunnel/start', { method: 'POST' })
+                .then(r => r.json())
+                .then(data => {
+                    if (data.success) {
+                        alert('✅ Tunnel starting! Watch for the Claim Link below.');
+                        checkTunnelStatus();
+                        // Polling is already handled by the global interval
+                    } else {
+                        btn.disabled = false;
+                        btn.textContent = '🚀 Start Playit.gg Tunnel';
+                        alert(`❌ Failed: ${data.message}`);
+                    }
+                });
+        }
+
+        function checkTunnelStatus() {
+            fetch('/api/tunnel/status')
+                .then(r => r.json())
+                .then(data => {
+                    const statusText = document.getElementById('tunnel-state');
+                    const claimBox = document.getElementById('claim-box');
+                    const claimLink = document.getElementById('claim-link');
+
+                    if (data.running) {
+                        statusText.textContent = 'Running 🟢';
+                        document.getElementById('tunnel-status').className = 'alert alert-success';
+
+                        // Show claim link if available
+                        if (data.claim_url) {
+                            claimBox.style.display = 'block';
+                            claimLink.href = data.claim_url;
+                            claimLink.textContent = data.claim_url;
+                        }
+
+                        // If we parsed an address (future proofing)
+                        if (data.public_address) {
+                            document.getElementById('tunnel-address-box').style.display = 'block';
+                            document.getElementById('tunnel-address').value = data.public_address;
+                            claimBox.style.display = 'none'; // Hide claim if we have address?
+                        }
+                    } else {
+                        statusText.textContent = 'Stopped 🔴';
+                        document.getElementById('tunnel-status').className = 'alert alert-warning';
+                    }
+                });
+        }
+
+        // Poll tunnel status every 5s
+        setInterval(checkTunnelStatus, 5000);
+
+        function copyAddress() {
+            const el = document.getElementById('tunnel-address');
+            el.select();
+            document.execCommand('copy');
+            alert('Copied to clipboard!');
         }
 
         // Auto-refresh logs every 5 seconds if on logs tab

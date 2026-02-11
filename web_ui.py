@@ -274,6 +274,91 @@ def api_settings_update():
     except Exception as e:
         return jsonify({'success': False, 'error': str(e)}), 500
 
+# ============================================================================
+# TUNNEL MANAGER (Playit.gg)
+# ============================================================================
+
+class TunnelManager:
+    def __init__(self):
+        self.process = None
+        self.claim_url = None
+        self.public_address = None
+        self.log_lines = []
+    
+    def start_tunnel(self):
+        """Start playit.gg tunnel"""
+        if self.process and self.process.poll() is None:
+            return {'success': True, 'message': 'Tunnel already running', 'address': self.public_address, 'claim_url': self.claim_url}
+
+        import subprocess
+        import threading
+        
+        # Download playit if missing
+        if not os.path.exists('playit'):
+            print("Downloading playit...")
+            subprocess.run(['wget', '-q', 'https://github.com/playit-cloud/playit-agent/releases/download/v0.15.26/playit-linux-amd64', '-O', 'playit'], check=True)
+            subprocess.run(['chmod', '+x', 'playit'], check=True)
+
+        # Start playit
+        self.process = subprocess.Popen(
+            ['./playit'],
+            stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT,
+            text=True,
+            bufsize=1
+        )
+        
+        # Start log monitor
+        threading.Thread(target=self._monitor_output, daemon=True).start()
+        
+        return {'success': True, 'message': 'Tunnel started. Wait for address...'}
+
+    def _monitor_output(self):
+        """Read playit logs to find URL and address"""
+        if not self.process: return
+            
+        for line in iter(self.process.stdout.readline, ''):
+            clean_line = line.strip()
+            self.log_lines.append(clean_line)
+            if len(self.log_lines) > 50: self.log_lines.pop(0)
+
+            # Check for claim URL
+            if 'claim details' in clean_line.lower() or 'visit link' in clean_line.lower():
+                # Extract URL
+                import re
+                match = re.search(r'https://playit\.gg/claim/[a-zA-Z0-9]+', clean_line)
+                if match:
+                    self.claim_url = match.group(0)
+            
+            # Check for public address
+            # Log format varies, look for .gl.joinmc.link or similar
+            if '.gl.joinmc.link' in clean_line or '.pl.local' in clean_line or 'tunnel address' in clean_line.lower():
+                 pass # Currently playit might not print final address in clear text easily on new versions without claim
+
+            # Keep looking for address in specialized format if updated
+    
+    def get_status(self):
+        return {
+            'running': self.process is not None and self.process.poll() is None,
+            'claim_url': self.claim_url,
+            'public_address': self.public_address,
+            'logs': self.log_lines[-10:]
+        }
+
+tunnel_mgr = TunnelManager()
+
+@app.route('/api/tunnel/start', methods=['POST'])
+def api_tunnel_start():
+    return jsonify(tunnel_mgr.start_tunnel())
+
+@app.route('/api/tunnel/status')
+def api_tunnel_status():
+    return jsonify(tunnel_mgr.get_status())
+
+# ============================================================================
+# SERVER RUNNER
+# ============================================================================
+
 def run_server(port=5000):
     """Run Flask server"""
     import os
