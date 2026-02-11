@@ -595,8 +595,21 @@ class ServerManager:
         # ── Build command ──
         jar = self.get_server_jar()
         java_bin = self.java_manager.get_java_binary()
+        
+        # Ensure absolute path for Java binary
+        if java_bin and Path(java_bin).exists():
+            java_bin = str(Path(java_bin).resolve())
+        elif not java_bin:
+             return Result.fail("Java binary path is empty")
+        else:
+             # Try to resolve it anyway, maybe it's system java?
+             # But if it's system java (e.g. "java"), resolve() might point to CWD/java which is wrong.
+             # Only resolve if it looks like a path.
+             if os.sep in java_bin or "/" in java_bin:
+                 java_bin = str(Path(java_bin).resolve())
 
         srv_cfg = self.get_server_config()
+
         ram = srv_cfg.get("ram", 2048)
         jvm_flags_str = self.get_jvm_flags()
 
