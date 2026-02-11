@@ -246,33 +246,56 @@ def run_server(port=5000):
     if is_colab:
         # Start Flask in background thread
         thread = Thread(
-            target=lambda: app.run(host='0.0.0.0', port=port, debug=False, threaded=True),
+            target=lambda: app.run(host='127.0.0.1', port=port, debug=False, threaded=True),
             daemon=True
         )
         thread.start()
 
-        import time
+        import time, subprocess, re
         time.sleep(2)
 
-        # Get the public proxy URL from Colab
-        try:
-            from google.colab.output import eval_js
-            proxy_url = eval_js(f"google.colab.kernel.proxyPort({port})")
+        # Install cloudflared (free, no account needed)
+        print("🔧 Setting up tunnel (free, no signup needed)...")
+        subprocess.run(
+            ["wget", "-q", "https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-amd64", "-O", "/usr/local/bin/cloudflared"],
+            check=True, capture_output=True
+        )
+        subprocess.run(["chmod", "+x", "/usr/local/bin/cloudflared"], check=True, capture_output=True)
+
+        # Start cloudflared tunnel
+        proc = subprocess.Popen(
+            ["/usr/local/bin/cloudflared", "tunnel", "--url", f"http://127.0.0.1:{port}"],
+            stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True
+        )
+
+        # Wait for the public URL
+        public_url = None
+        for _ in range(30):
+            line = proc.stderr.readline()
+            match = re.search(r'(https://[a-zA-Z0-9\-]+\.trycloudflare\.com)', line)
+            if match:
+                public_url = match.group(1)
+                break
+            time.sleep(0.5)
+
+        if public_url:
             print("\n" + "=" * 60)
             print("✅ WEB UI IS READY!")
             print("=" * 60)
-            print(f"\n🌐 CLICK THIS LINK TO OPEN DASHBOARD:\n")
-            print(f"   {proxy_url}")
-            print(f"\n" + "=" * 60)
-        except Exception:
-            print("\n⚠️  Could not auto-detect URL.")
-            print(f"   Try: https://localhost:{port}")
+            print(f"\n🌐 OPEN THIS LINK IN YOUR BROWSER:\n")
+            print(f"   {public_url}")
+            print(f"\n📱 Works on phone too! Share with anyone!")
+            print(f"\n⚠️  Keep this cell running!")
+            print("=" * 60 + "\n")
+        else:
+            print(f"\n⚠️  Tunnel setup failed. Try: http://localhost:{port}")
 
         # Keep alive
         try:
             while True:
                 time.sleep(1)
         except KeyboardInterrupt:
+            proc.kill()
             print("\n👋 Server stopped.")
     else:
         print(f"\n🚀 Web UI: http://localhost:{port}\n")
