@@ -16,48 +16,50 @@ def build_dashboard(pane: TabPane, app: "MinecraftServerManagerApp") -> None:
 
     # ── Quick Stats row ──
     stats = Horizontal(id="quick-stats")
+    pane.mount(stats)  # Mount parent first!
 
     mem_card = Vertical(classes="stat-card")
+    stats.mount(mem_card)  # Now mount to stats
     mem_card.mount(Label("—", id="stat-mem-val", classes="stat-value"))
     mem_card.mount(Label("Memory", classes="stat-label"))
 
     tps_card = Vertical(classes="stat-card")
+    stats.mount(tps_card)
     tps_card.mount(Label("20.0", id="stat-tps-val", classes="stat-value"))
     tps_card.mount(Label("TPS", classes="stat-label"))
 
     players_card = Vertical(classes="stat-card")
+    stats.mount(players_card)
     players_card.mount(Label("0", id="stat-players-val", classes="stat-value"))
     players_card.mount(Label("Players", classes="stat-label"))
 
     uptime_card = Vertical(classes="stat-card")
+    stats.mount(uptime_card)
     uptime_card.mount(Label("—", id="stat-uptime-val", classes="stat-value"))
     uptime_card.mount(Label("Uptime", classes="stat-label"))
 
-    stats.mount(mem_card)
-    stats.mount(tps_card)
-    stats.mount(players_card)
-    stats.mount(uptime_card)
-    pane.mount(stats)
-
     # ── Server Controls ──
     controls = Horizontal(id="server-controls")
+    pane.mount(controls)  # Mount parent first!
     controls.mount(Button("▶ Start", id="dash-start", classes="action-btn btn-start"))
     controls.mount(Button("■ Stop", id="dash-stop", classes="action-btn btn-stop"))
     controls.mount(Button("↻ Restart", id="dash-restart", classes="action-btn btn-primary"))
     controls.mount(Button("💾 Backup", id="dash-backup", classes="action-btn btn-secondary"))
-    pane.mount(controls)
 
     # ── Main split ──
     main = Horizontal(id="dashboard-main")
+    pane.mount(main)  # Mount parent first!
 
     # Console
     left = Vertical(id="dash-left")
+    main.mount(left)  # Mount to main
     left.mount(Label("📋 Server Console", classes="panel-title"))
     left.mount(ServerLogView(id="log-view"))
     left.mount(Input(placeholder="Type server command…", id="cmd-input"))
 
     # Resources
     right = Vertical(id="dash-right")
+    main.mount(right)  # Mount to main
     right.mount(Label("📊 System Resources", classes="panel-title"))
     cpu = ResourceBar(id="cpu-bar")
     ram = ResourceBar(id="ram-bar")
@@ -71,10 +73,6 @@ def build_dashboard(pane: TabPane, app: "MinecraftServerManagerApp") -> None:
     right.mount(Label("📝 Recent Actions", classes="panel-title"))
     actions_table = DataTable(id="actions-table")
     right.mount(actions_table)
-
-    main.mount(left)
-    main.mount(right)
-    pane.mount(main)
 
     # ── Configure after mount ──
     def _post_mount() -> None:

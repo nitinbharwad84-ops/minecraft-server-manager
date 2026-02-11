@@ -17,29 +17,30 @@ def build_eula(pane: TabPane, app: "MinecraftServerManagerApp") -> None:
 
     # ── EULA Status ──
     status_panel = Vertical(id="eula-status")
+    pane.mount(status_panel)
     status_panel.mount(Label("", id="eula-status-label"))
     status_panel.mount(Label("", id="eula-url"))
-    pane.mount(status_panel)
 
     # ── EULA Text Viewer ──
     pane.mount(Label("📄 Minecraft EULA", classes="panel-title"))
     eula_text = TextArea(id="eula-text-view", read_only=True, theme="monokai")
     container = Vertical(id="eula-text-container")
-    container.mount(eula_text)
     pane.mount(container)
+    container.mount(eula_text)
 
     # ── Actions ──
     actions = Horizontal(id="eula-actions")
+    pane.mount(actions)
     actions.mount(Button("✅ Accept EULA", id="eula-accept", classes="action-btn btn-start"))
     actions.mount(Button("❌ Decline EULA", id="eula-decline", classes="action-btn btn-stop"))
     actions.mount(Button("🔄 Check Status", id="eula-check", classes="action-btn btn-secondary"))
-    pane.mount(actions)
 
     # ── Setup Wizard Section ──
     pane.mount(Label(""))
     pane.mount(Label("🧙 Quick Setup Wizard", classes="panel-title"))
 
     wizard = Vertical(classes="settings-group")
+    pane.mount(wizard)
     wizard.mount(Label(
         "First time? Click below to run the setup wizard.\n"
         "This will accept the EULA, generate server.properties,\n"
@@ -48,7 +49,6 @@ def build_eula(pane: TabPane, app: "MinecraftServerManagerApp") -> None:
     ))
     wizard.mount(Button("🚀 Run Setup Wizard", id="eula-wizard", classes="action-btn btn-primary"))
     wizard.mount(Label("", id="wizard-status"))
-    pane.mount(wizard)
 
     # ── Properties quick editor ──
     pane.mount(Label(""))
@@ -57,9 +57,9 @@ def build_eula(pane: TabPane, app: "MinecraftServerManagerApp") -> None:
     pane.mount(props_area)
 
     props_btns = Horizontal()
+    pane.mount(props_btns)
     props_btns.mount(Button("💾 Save Properties", id="props-save", classes="action-btn btn-primary"))
     props_btns.mount(Button("🔄 Reload", id="props-reload", classes="action-btn btn-secondary"))
-    pane.mount(props_btns)
 
     # ── Init ──
     def _init() -> None:

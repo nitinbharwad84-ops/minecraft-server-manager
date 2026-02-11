@@ -18,10 +18,10 @@ def build_plugins(pane: TabPane, app: "MinecraftServerManagerApp") -> None:
 
     # ── Search row ──
     search_row = Horizontal(id="plugin-search-row")
+    pane.mount(search_row)
     search_row.mount(Input(placeholder="Search plugins…", id="plug-query"))
     search_row.mount(Button("🔍 Search", id="plug-search", classes="action-btn btn-primary"))
     search_row.mount(Button("🔄 Check Updates", id="plug-updates", classes="action-btn btn-secondary"))
-    pane.mount(search_row)
 
     # ── Progress ──
     pane.mount(Label("", id="plug-progress-label"))
@@ -34,16 +34,16 @@ def build_plugins(pane: TabPane, app: "MinecraftServerManagerApp") -> None:
 
     # ── Detail panel ──
     detail = Vertical(id="plugin-details")
-    detail.mount(Label("Select a plugin to view details", id="plug-detail-text"))
     pane.mount(detail)
+    detail.mount(Label("Select a plugin to view details", id="plug-detail-text"))
 
     # ── Action buttons ──
     actions = Horizontal()
+    pane.mount(actions)
     actions.mount(Button("⬇ Install", id="plug-install", classes="action-btn btn-start"))
     actions.mount(Button("🗑 Uninstall", id="plug-uninstall", classes="action-btn btn-stop"))
     actions.mount(Button("⬆ Update", id="plug-update", classes="action-btn btn-warning"))
     actions.mount(Button("📁 Install from File", id="plug-file", classes="action-btn btn-secondary"))
-    pane.mount(actions)
 
     # ── Installed plugins ──
     pane.mount(Label("📦 Installed Plugins", classes="panel-title"))

@@ -35,89 +35,87 @@ def build_settings(pane: TabPane, app: "MinecraftServerManagerApp") -> None:
 
     # ── Server Config Group ──
     g1 = Vertical(classes="settings-group")
+    pane.mount(g1)  # Mount parent first!
     g1.mount(Label("🖥️ Server Configuration", classes="settings-group-title"))
 
     r1 = Horizontal(classes="settings-row")
+    g1.mount(r1)  # Mount to parent
     r1.mount(Label("Server Type:", classes="settings-label"))
     r1.mount(Select(SERVER_TYPES, value=cfg.get("type", "paper"), id="set-type", classes="settings-input"))
-    g1.mount(r1)
 
     r2 = Horizontal(classes="settings-row")
+    g1.mount(r2)
     r2.mount(Label("MC Version:", classes="settings-label"))
     r2.mount(Input(value=cfg.get("version", "1.20.1"), id="set-version", classes="settings-input"))
-    g1.mount(r2)
 
     r3 = Horizontal(classes="settings-row")
+    g1.mount(r3)
     r3.mount(Label("World Name:", classes="settings-label"))
     r3.mount(Input(value=cfg.get("world_name", "world"), id="set-world", classes="settings-input"))
-    g1.mount(r3)
 
     r4 = Horizontal(classes="settings-row")
+    g1.mount(r4)
     r4.mount(Label("Server Port:", classes="settings-label"))
     r4.mount(Input(value=str(cfg.get("port", 25565)), id="set-port", classes="settings-input"))
-    g1.mount(r4)
 
     r5 = Horizontal(classes="settings-row")
+    g1.mount(r5)
     r5.mount(Label("MOTD:", classes="settings-label"))
     r5.mount(Input(value=cfg.get("motd", "A Minecraft Server"), id="set-motd", classes="settings-input"))
-    g1.mount(r5)
-
-    pane.mount(g1)
 
     # ── Gameplay Group ──
     g2 = Vertical(classes="settings-group")
+    pane.mount(g2)
     g2.mount(Label("🎮 Gameplay", classes="settings-group-title"))
 
     r6 = Horizontal(classes="settings-row")
+    g2.mount(r6)
     r6.mount(Label("Difficulty:", classes="settings-label"))
     r6.mount(Select(DIFFICULTIES, value=cfg.get("difficulty", "normal"), id="set-diff", classes="settings-input"))
-    g2.mount(r6)
 
     r7 = Horizontal(classes="settings-row")
+    g2.mount(r7)
     r7.mount(Label("Gamemode:", classes="settings-label"))
     r7.mount(Select(GAMEMODES, value=cfg.get("gamemode", "survival"), id="set-gm", classes="settings-input"))
-    g2.mount(r7)
 
     r8 = Horizontal(classes="settings-row")
+    g2.mount(r8)
     r8.mount(Label("PvP Enabled:", classes="settings-label"))
     r8.mount(Switch(value=cfg.get("pvp", True), id="set-pvp"))
-    g2.mount(r8)
 
     r9 = Horizontal(classes="settings-row")
+    g2.mount(r9)
     r9.mount(Label("Online Mode:", classes="settings-label"))
     r9.mount(Switch(value=cfg.get("online_mode", True), id="set-online"))
-    g2.mount(r9)
-
-    pane.mount(g2)
 
     # ── Performance Group ──
     g3 = Vertical(classes="settings-group")
+    pane.mount(g3)
     g3.mount(Label("⚡ Performance", classes="settings-group-title"))
 
     r10 = Horizontal(classes="settings-row")
+    g3.mount(r10)
     r10.mount(Label("Max Players:", classes="settings-label"))
     r10.mount(Input(value=str(cfg.get("max_players", 20)), id="set-maxp", classes="settings-input"))
-    g3.mount(r10)
 
     r11 = Horizontal(classes="settings-row")
+    g3.mount(r11)
     r11.mount(Label("RAM (MB):", classes="settings-label"))
     r11.mount(Input(value=str(cfg.get("ram", 2048)), id="set-ram", classes="settings-input"))
-    g3.mount(r11)
 
     r12 = Horizontal(classes="settings-row")
+    g3.mount(r12)
     r12.mount(Label("View Distance:", classes="settings-label"))
     r12.mount(Input(value=str(cfg.get("view_distance", 10)), id="set-vd", classes="settings-input"))
-    g3.mount(r12)
 
     r13 = Horizontal(classes="settings-row")
+    g3.mount(r13)
     r13.mount(Label("Sim Distance:", classes="settings-label"))
     r13.mount(Input(value=str(cfg.get("simulation_distance", 10)), id="set-sd", classes="settings-input"))
-    g3.mount(r13)
-
-    pane.mount(g3)
 
     # ── Save Button ──
     save_row = Horizontal()
+    pane.mount(save_row)
     save_row.mount(Button("💾 Save Settings", id="set-save", classes="action-btn btn-primary"))
     save_row.mount(Button("↺ Reset to Defaults", id="set-reset", classes="action-btn btn-secondary"))
     pane.mount(save_row)

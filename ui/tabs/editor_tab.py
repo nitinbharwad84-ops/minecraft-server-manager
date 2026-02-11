@@ -17,9 +17,11 @@ def build_editor(pane: TabPane, app: "MinecraftServerManagerApp") -> None:
     pane.mount(Label("📝  File Editor", classes="panel-title"))
 
     layout = Horizontal(id="editor-layout")
+    pane.mount(layout)
 
     # ── File list (left) ──
     left = Vertical(id="file-tree")
+    layout.mount(left)
     left.mount(Label("📁 Files", classes="settings-group-title"))
     file_table = DataTable(id="file-list")
     left.mount(file_table)
@@ -27,6 +29,7 @@ def build_editor(pane: TabPane, app: "MinecraftServerManagerApp") -> None:
 
     # ── Editor (right) ──
     right = Vertical(id="editor-right")
+    layout.mount(right)
     right.mount(Label("", id="ed-filename"))
     editor = TextArea(id="ed-textarea", language="toml", theme="monokai")
     right.mount(editor)
@@ -35,15 +38,11 @@ def build_editor(pane: TabPane, app: "MinecraftServerManagerApp") -> None:
     right.mount(statusbar)
 
     btns = Horizontal(id="editor-buttons")
+    right.mount(btns)
     btns.mount(Button("💾 Save", id="ed-save", classes="action-btn btn-start"))
     btns.mount(Button("↺ Reset", id="ed-reset", classes="action-btn btn-secondary"))
     btns.mount(Button("📋 Backup", id="ed-backup", classes="action-btn btn-primary"))
     btns.mount(Button("✅ Validate", id="ed-validate", classes="action-btn btn-warning"))
-    right.mount(btns)
-
-    layout.mount(left)
-    layout.mount(right)
-    pane.mount(layout)
 
     _current_file: dict = {"path": None, "original": ""}
 

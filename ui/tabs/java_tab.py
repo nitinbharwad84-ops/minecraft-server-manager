@@ -17,10 +17,10 @@ def build_java(pane: TabPane, app: "MinecraftServerManagerApp") -> None:
 
     # ── Java info panel ──
     info = Vertical(id="java-info")
+    pane.mount(info)
     info.mount(Label("", id="java-active-label"))
     info.mount(Label("", id="java-required-label"))
     info.mount(Label("", id="java-compat-label"))
-    pane.mount(info)
 
     # ── Installed versions table ──
     pane.mount(Label("📋 Installed Java Versions", classes="panel-title"))
@@ -29,18 +29,18 @@ def build_java(pane: TabPane, app: "MinecraftServerManagerApp") -> None:
 
     # ── Actions ──
     actions = Horizontal(id="java-actions")
+    pane.mount(actions)
     actions.mount(Button("🔍 Detect System Java", id="java-detect", classes="action-btn btn-primary"))
     actions.mount(Button("⬇ Install Java 17", id="java-inst-17", classes="action-btn btn-primary"))
     actions.mount(Button("⬇ Install Java 21", id="java-inst-21", classes="action-btn btn-primary"))
     actions.mount(Button("✓ Set Active", id="java-activate", classes="action-btn btn-start"))
     actions.mount(Button("🗑 Remove", id="java-remove", classes="action-btn btn-stop"))
-    pane.mount(actions)
 
     # ── System info panel ──
     sys_panel = Vertical(id="system-info")
+    pane.mount(sys_panel)
     sys_panel.mount(Label("🖥️ System Information", classes="settings-group-title"))
     sys_panel.mount(Label("", id="sys-info-text"))
-    pane.mount(sys_panel)
 
     # ── Initialization ──
     def _init() -> None:
