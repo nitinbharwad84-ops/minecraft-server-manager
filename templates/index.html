@@ -1,0 +1,783 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>⛏️ Minecraft Server Manager</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        header {
+            background: rgba(255, 255, 255, 0.95);
+            padding: 20px 30px;
+            border-radius: 15px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            margin-bottom: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        h1 {
+            color: #667eea;
+            font-size: 28px;
+        }
+
+        .status-badge {
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-weight: bold;
+            font-size: 14px;
+        }
+
+        .status-running {
+            background: #10b981;
+            color: white;
+        }
+
+        .status-stopped {
+            background: #ef4444;
+            color: white;
+        }
+
+        .tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .tab {
+            background: rgba(255, 255, 255, 0.9);
+            padding: 12px 24px;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-weight: 500;
+        }
+
+        .tab:hover {
+            background: white;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        }
+
+        .tab.active {
+            background: white;
+            color: #667eea;
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .card {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+        }
+
+        .card-title {
+            font-size: 20px;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .stat-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 12px;
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 32px;
+            font-weight: bold;
+            margin: 10px 0;
+        }
+
+        .stat-label {
+            font-size: 14px;
+            opacity: 0.9;
+        }
+
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            transition: all 0.3s;
+            margin-right: 10px;
+            margin-bottom: 10px;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+        }
+
+        .btn-primary {
+            background: #667eea;
+            color: white;
+        }
+
+        .btn-success {
+            background: #10b981;
+            color: white;
+        }
+
+        .btn-danger {
+            background: #ef4444;
+            color: white;
+        }
+
+        .btn-warning {
+            background: #f59e0b;
+            color: white;
+        }
+
+        .btn-secondary {
+            background: #6b7280;
+            color: white;
+        }
+
+        .log-container {
+            background: #1e293b;
+            color: #e2e8f0;
+            padding: 15px;
+            border-radius: 8px;
+            font-family: 'Courier New', monospace;
+            font-size: 13px;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        .log-line {
+            margin: 4px 0;
+        }
+
+        input, select {
+            padding: 10px 15px;
+            border: 2px solid #e5e7eb;
+            border-radius: 8px;
+            font-size: 14px;
+            width: 100%;
+            margin-bottom: 15px;
+        }
+
+        input:focus, select:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+            color: #374151;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 8px;
+            background: #e5e7eb;
+            border-radius: 4px;
+            overflow: hidden;
+            margin-top: 5px;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #667eea, #764ba2);
+            transition: width 0.3s;
+        }
+
+        .alert {
+            padding: 15px 20px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            font-weight: 500;
+        }
+
+        .alert-success {
+            background: #d1fae5;
+            color: #065f46;
+        }
+
+        .alert-error {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+
+        .alert-warning {
+            background: #fef3c7;
+            color: #92400e;
+        }
+
+        .table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .table th {
+            background: #f3f4f6;
+            padding: 12px;
+            text-align: left;
+            font-weight: 600;
+            color: #374151;
+        }
+
+        .table td {
+            padding: 12px;
+            border-bottom: 1px solid #e5e7eb;
+        }
+
+        .table tr:hover {
+            background: #f9fafb;
+        }
+
+        .command-input-group {
+            display: flex;
+            gap: 10px;
+        }
+
+        .command-input-group input {
+            flex: 1;
+            margin: 0;
+        }
+
+        .command-input-group button {
+            margin: 0;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        .loading {
+            animation: pulse 1.5s infinite;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>⛏️ Minecraft Server Manager</h1>
+            <div>
+                <span id="status-badge" class="status-badge status-stopped">🔴 Stopped</span>
+            </div>
+        </header>
+
+        <div class="tabs">
+            <div class="tab active" onclick="showTab('dashboard')">📊 Dashboard</div>
+            <div class="tab" onclick="showTab('java')">☕ Java</div>
+            <div class="tab" onclick="showTab('eula')">📜 EULA</div>
+            <div class="tab" onclick="showTab('settings')">⚙️ Settings</div>
+            <div class="tab" onclick="showTab('logs')">📋 Logs</div>
+        </div>
+
+        <!-- Dashboard Tab -->
+        <div id="dashboard" class="tab-content active">
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-label">TPS</div>
+                    <div class="stat-value" id="stat-tps">20.0</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">Players</div>
+                    <div class="stat-value" id="stat-players">0/20</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">CPU</div>
+                    <div class="stat-value" id="stat-cpu">0%</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">RAM</div>
+                    <div class="stat-value" id="stat-ram">0 MB</div>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-title">🚀 Server Control</div>
+                <button class="btn btn-success" onclick="startServer()">▶️ Start Server</button>
+                <button class="btn btn-danger" onclick="stopServer()">⏹️ Stop Server</button>
+                <button class="btn btn-warning" onclick="restartServer()">🔄 Restart Server</button>
+                <button class="btn btn-primary" onclick="backupServer()">💾 Backup World</button>
+            </div>
+
+            <div class="card">
+                <div class="card-title">💬 Send Command</div>
+                <div class="command-input-group">
+                    <input type="text" id="command-input" placeholder="Type command (e.g., say Hello)..." onkeypress="if(event.key==='Enter') sendCommand()">
+                    <button class="btn btn-primary" onclick="sendCommand()">Send</button>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-title">📊 System Resources</div>
+                <label>CPU Usage</label>
+                <div class="progress-bar">
+                    <div class="progress-fill" id="cpu-progress" style="width: 0%"></div>
+                </div>
+                
+                <label style="margin-top: 15px;">RAM Usage</label>
+                <div class="progress-bar">
+                    <div class="progress-fill" id="ram-progress" style="width: 0%"></div>
+                </div>
+                
+                <label style="margin-top: 15px;">Disk Usage</label>
+                <div class="progress-bar">
+                    <div class="progress-fill" id="disk-progress" style="width: 0%"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Java Tab -->
+        <div id="java" class="tab-content">
+            <div class="card">
+                <div class="card-title">☕ Java Management</div>
+                <div id="java-status" class="alert alert-warning">
+                    Active: <span id="java-active">None</span>
+                </div>
+                <button class="btn btn-primary" onclick="detectJava()">🔍 Detect System Java</button>
+                <button class="btn btn-success" onclick="installJava(17)">⬇️ Install Java 17</button>
+                <button class="btn btn-success" onclick="installJava(21)">⬇️ Install Java 21</button>
+            </div>
+
+            <div class="card">
+                <div class="card-title">📦 Installed Versions</div>
+                <table class="table" id="java-table">
+                    <thead>
+                        <tr>
+                            <th>Version</th>
+                            <th>Path</th>
+                            <th>Vendor</th>
+                            <th>Status</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody id="java-table-body">
+                        <tr><td colspan="5" style="text-align: center; color: #9ca3af;">Loading...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- EULA Tab -->
+        <div id="eula" class="tab-content">
+            <div class="card">
+                <div class="card-title">📜 Minecraft EULA</div>
+                <div id="eula-status-box" class="alert alert-error">
+                    EULA Status: <strong id="eula-status">Not Accepted</strong>
+                </div>
+                
+                <p style="margin: 20px 0; line-height: 1.6; color: #4b5563;">
+                    By running the Minecraft server software, you agree to the Minecraft End User License Agreement (EULA).
+                    You can read the full EULA at: <a href="https://www.minecraft.net/en-us/eula" target="_blank" style="color: #667eea;">https://www.minecraft.net/en-us/eula</a>
+                </p>
+
+                <button class="btn btn-success" onclick="acceptEULA()">✅ Accept EULA</button>
+                <button class="btn btn-danger" onclick="declineEULA()">❌ Decline EULA</button>
+            </div>
+        </div>
+
+        <!-- Settings Tab -->
+        <div id="settings" class="tab-content">
+            <div class="card">
+                <div class="card-title">⚙️ Server Settings</div>
+                
+                <div class="form-group">
+                    <label>Server Type</label>
+                    <select id="setting-type">
+                        <option value="vanilla">Vanilla</option>
+                        <option value="paper">Paper</option>
+                        <option value="spigot">Spigot</option>
+                        <option value="purpur">Purpur</option>
+                        <option value="fabric">Fabric</option>
+                        <option value="forge">Forge</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label>Minecraft Version</label>
+                    <input type="text" id="setting-version" placeholder="1.20.1">
+                </div>
+
+                <div class="form-group">
+                    <label>RAM (MB)</label>
+                    <input type="number" id="setting-ram" placeholder="2048">
+                </div>
+
+                <div class="form-group">
+                    <label>Max Players</label>
+                    <input type="number" id="setting-maxplayers" placeholder="20">
+                </div>
+
+                <div class="form-group">
+                    <label>Difficulty</label>
+                    <select id="setting-difficulty">
+                        <option value="peaceful">Peaceful</option>
+                        <option value="easy">Easy</option>
+                        <option value="normal">Normal</option>
+                        <option value="hard">Hard</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label>Gamemode</label>
+                    <select id="setting-gamemode">
+                        <option value="survival">Survival</option>
+                        <option value="creative">Creative</option>
+                        <option value="adventure">Adventure</option>
+                        <option value="spectator">Spectator</option>
+                    </select>
+                </div>
+
+                <button class="btn btn-success" onclick="saveSettings()">💾 Save Settings</button>
+            </div>
+        </div>
+
+        <!-- Logs Tab -->
+        <div id="logs" class="tab-content">
+            <div class="card">
+                <div class="card-title">📋 Server Logs</div>
+                <button class="btn btn-primary" onclick="refreshLogs()" style="margin-bottom: 15px;">🔄 Refresh Logs</button>
+                <div class="log-container" id="log-container">
+                    <div class="log-line">No logs available yet...</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Tab switching
+        function showTab(tabName) {
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+            
+            event.target.classList.add('active');
+            document.getElementById(tabName).classList.add('active');
+            
+            // Load tab-specific data
+            if (tabName === 'java') loadJavaVersions();
+            if (tabName === 'eula') checkEULAStatus();
+            if (tabName === 'settings') loadSettings();
+            if (tabName === 'logs') refreshLogs();
+        }
+
+        // Auto-refresh status every 3 seconds
+        setInterval(updateStatus, 3000);
+        updateStatus();
+
+        function updateStatus() {
+            fetch('/api/status')
+                .then(r => r.json())
+                .then(data => {
+                    if (data.success) {
+                        const status = data.status;
+                        const resources = data.resources;
+                        const config = data.config;
+
+                        // Update status badge
+                        const badge = document.getElementById('status-badge');
+                        if (status.running) {
+                            badge.textContent = '🟢 Running';
+                            badge.className = 'status-badge status-running';
+                        } else {
+                            badge.textContent = '🔴 Stopped';
+                            badge.className = 'status-badge status-stopped';
+                        }
+
+                        // Update stats
+                        document.getElementById('stat-tps').textContent = status.tps || '20.0';
+                        document.getElementById('stat-players').textContent = 
+                            `${status.player_count || 0}/${config.max_players || 20}`;
+                        document.getElementById('stat-cpu').textContent = 
+                            `${Math.round(resources.cpu_percent || 0)}%`;
+                        document.getElementById('stat-ram').textContent = 
+                            `${Math.round(resources.ram_used_mb || 0)} MB`;
+
+                        // Update progress bars
+                        document.getElementById('cpu-progress').style.width = 
+                            `${resources.cpu_percent || 0}%`;
+                        document.getElementById('ram-progress').style.width = 
+                            `${resources.ram_percent || 0}%`;
+                        document.getElementById('disk-progress').style.width = 
+                            `${resources.disk_percent || 0}%`;
+                    }
+                });
+        }
+
+        function startServer() {
+            if (!confirm('Start the Minecraft server?')) return;
+            
+            fetch('/api/server/start', {method: 'POST'})
+                .then(r => r.json())
+                .then(data => {
+                    alert(data.success ? '✅ Server started!' : `❌ Error: ${data.error}`);
+                    updateStatus();
+                });
+        }
+
+        function stopServer() {
+            if (!confirm('Stop the Minecraft server?')) return;
+            
+            fetch('/api/server/stop', {method: 'POST'})
+                .then(r => r.json())
+                .then(data => {
+                    alert(data.success ? '✅ Server stopped!' : `❌ Error: ${data.error}`);
+                    updateStatus();
+                });
+        }
+
+        function restartServer() {
+            if (!confirm('Restart the Minecraft server?')) return;
+            
+            fetch('/api/server/restart', {method: 'POST'})
+                .then(r => r.json())
+                .then(data => {
+                    alert(data.success ? '✅ Server restarted!' : `❌ Error: ${data.error}`);
+                    updateStatus();
+                });
+        }
+
+        function backupServer() {
+            if (!confirm('Create a backup of the world?')) return;
+            
+            fetch('/api/server/backup', {method: 'POST'})
+                .then(r => r.json())
+                .then(data => {
+                    alert(data.success ? `✅ Backup created: ${data.backup_path}` : `❌ Error: ${data.error}`);
+                });
+        }
+
+        function sendCommand() {
+            const input = document.getElementById('command-input');
+            const cmd = input.value.trim();
+            if (!cmd) return;
+            
+            fetch('/api/server/command', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({command: cmd})
+            })
+            .then(r => r.json())
+            .then(data => {
+                if (data.success) {
+                    input.value = '';
+                    alert(`✅ Command sent: ${cmd}`);
+                } else {
+                    alert(`❌ Error: ${data.error}`);
+                }
+            });
+        }
+
+        function loadJavaVersions() {
+            fetch('/api/java/list')
+                .then(r => r.json())
+                .then(data => {
+                    if (data.success) {
+                        document.getElementById('java-active').textContent = 
+                            data.active.version ? `Java ${data.active.version}` : 'None';
+                        
+                        const tbody = document.getElementById('java-table-body');
+                        tbody.innerHTML = '';
+                        
+                        if (data.installed.length === 0) {
+                            tbody.innerHTML = '<tr><td colspan="5" style="text-align: center; color: #9ca3af;">No Java versions installed</td></tr>';
+                        } else {
+                            data.installed.forEach(j => {
+                                tbody.innerHTML += `
+                                    <tr>
+                                        <td>${j.version}</td>
+                                        <td style="font-size: 12px; color: #6b7280;">${j.path}</td>
+                                        <td>${j.vendor}</td>
+                                        <td>${j.is_active ? '✅ Active' : ''}</td>
+                                        <td>
+                                            ${!j.is_active ? `<button class="btn btn-primary" onclick="activateJava(${j.version})">Set Active</button>` : ''}
+                                        </td>
+                                    </tr>
+                                `;
+                            });
+                        }
+                    }
+                });
+        }
+
+        function detectJava() {
+            fetch('/api/java/detect', {method: 'POST'})
+                .then(r => r.json())
+                .then(data => {
+                    alert(data.success ? `✅ Found ${data.found} Java installation(s)` : `❌ Error: ${data.error}`);
+                    loadJavaVersions();
+                });
+        }
+
+        function installJava(version) {
+            if (!confirm(`Install Java ${version}? This may take a few minutes.`)) return;
+            
+            const btn = event.target;
+            btn.disabled = true;
+            btn.classList.add('loading');
+            btn.textContent = `Installing Java ${version}...`;
+            
+            fetch(`/api/java/install/${version}`, {method: 'POST'})
+                .then(r => r.json())
+                .then(data => {
+                    btn.disabled = false;
+                    btn.classList.remove('loading');
+                    btn.textContent = `⬇️ Install Java ${version}`;
+                    alert(data.message);
+                    loadJavaVersions();
+                });
+        }
+
+        function activateJava(version) {
+            fetch(`/api/java/activate/${version}`, {method: 'POST'})
+                .then(r => r.json())
+                .then(data => {
+                    alert(data.message);
+                    loadJavaVersions();
+                });
+        }
+
+        function checkEULAStatus() {
+            fetch('/api/eula/status')
+                .then(r => r.json())
+                .then(data => {
+                    const statusBox = document.getElementById('eula-status-box');
+                    const statusText = document.getElementById('eula-status');
+                    
+                    if (data.accepted) {
+                        statusBox.className = 'alert alert-success';
+                        statusText.textContent = 'Accepted ✅';
+                    } else {
+                        statusBox.className = 'alert alert-error';
+                        statusText.textContent = 'Not Accepted ❌';
+                    }
+                });
+        }
+
+        function acceptEULA() {
+            if (!confirm('Do you agree to the Minecraft EULA?')) return;
+            
+            fetch('/api/eula/accept', {method: 'POST'})
+                .then(r => r.json())
+                .then(data => {
+                    alert(data.message);
+                    checkEULAStatus();
+                });
+        }
+
+        function declineEULA() {
+            fetch('/api/eula/decline', {method: 'POST'})
+                .then(r => r.json())
+                .then(data => {
+                    alert(data.message);
+                    checkEULAStatus();
+                });
+        }
+
+        function loadSettings() {
+            fetch('/api/settings/get')
+                .then(r => r.json())
+                .then(data => {
+                    if (data.success) {
+                        const cfg = data.config;
+                        document.getElementById('setting-type').value = cfg.type || 'paper';
+                        document.getElementById('setting-version').value = cfg.version || '1.20.1';
+                        document.getElementById('setting-ram').value = cfg.ram || 2048;
+                        document.getElementById('setting-maxplayers').value = cfg.max_players || 20;
+                        document.getElementById('setting-difficulty').value = cfg.difficulty || 'normal';
+                        document.getElementById('setting-gamemode').value = cfg.gamemode || 'survival';
+                    }
+                });
+        }
+
+        function saveSettings() {
+            const settings = {
+                type: document.getElementById('setting-type').value,
+                version: document.getElementById('setting-version').value,
+                ram: parseInt(document.getElementById('setting-ram').value),
+                max_players: parseInt(document.getElementById('setting-maxplayers').value),
+                difficulty: document.getElementById('setting-difficulty').value,
+                gamemode: document.getElementById('setting-gamemode').value
+            };
+            
+            fetch('/api/settings/update', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify(settings)
+            })
+            .then(r => r.json())
+            .then(data => {
+                alert(data.success ? '✅ Settings saved!' : `❌ Error: ${data.error}`);
+            });
+        }
+
+        function refreshLogs() {
+            fetch('/api/server/logs?lines=50')
+                .then(r => r.json())
+                .then(data => {
+                    const container = document.getElementById('log-container');
+                    if (data.success && data.logs.length > 0) {
+                        container.innerHTML = data.logs.map(line => 
+                            `<div class="log-line">${line}</div>`
+                        ).join('');
+                    } else {
+                        container.innerHTML = '<div class="log-line">No logs available yet...</div>';
+                    }
+                    container.scrollTop = container.scrollHeight;
+                });
+        }
+
+        // Auto-refresh logs every 5 seconds if on logs tab
+        setInterval(() => {
+            if (document.getElementById('logs').classList.contains('active')) {
+                refreshLogs();
+            }
+        }, 5000);
+    </script>
+</body>
+</html>
