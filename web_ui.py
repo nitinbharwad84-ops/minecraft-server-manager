@@ -244,37 +244,38 @@ def run_server(port=5000):
     is_colab = os.path.exists('/content')
 
     if is_colab:
-        # Start Flask in a background thread so the cell doesn't block
-        thread = Thread(target=lambda: app.run(host='0.0.0.0', port=port, debug=False, threaded=True), daemon=True)
+        # Start Flask in background thread
+        thread = Thread(
+            target=lambda: app.run(host='0.0.0.0', port=port, debug=False, threaded=True),
+            daemon=True
+        )
         thread.start()
 
         import time
-        time.sleep(2)  # Wait for server to start
+        time.sleep(2)
 
-        # Use Colab's built-in proxy
-        from google.colab import output
-        print("\n" + "=" * 60)
-        print("✅ WEB UI IS READY!")
-        print("=" * 60)
-        print(f"\n🌐 Opening dashboard in a new tab...\n")
-        output.serve_kernel_port_as_window(port, path='/')
-        print(f"📱 If the window didn't open, click this link:")
-        print(f"   https://localhost:{port}")
-        print(f"\n💡 Or run this in a NEW cell to open it:")
-        print(f'   from google.colab import output')
-        print(f'   output.serve_kernel_port_as_window({port})')
-        print("\n⚠️  Keep THIS cell running! Stopping it kills the server.")
-        print("=" * 60)
+        # Get the public proxy URL from Colab
+        try:
+            from google.colab.output import eval_js
+            proxy_url = eval_js(f"google.colab.kernel.proxyPort({port})")
+            print("\n" + "=" * 60)
+            print("✅ WEB UI IS READY!")
+            print("=" * 60)
+            print(f"\n🌐 CLICK THIS LINK TO OPEN DASHBOARD:\n")
+            print(f"   {proxy_url}")
+            print(f"\n" + "=" * 60)
+        except Exception:
+            print("\n⚠️  Could not auto-detect URL.")
+            print(f"   Try: https://localhost:{port}")
 
-        # Keep the cell alive
+        # Keep alive
         try:
             while True:
                 time.sleep(1)
         except KeyboardInterrupt:
             print("\n👋 Server stopped.")
     else:
-        print(f"\n🚀 Starting web server on http://localhost:{port}")
-        print(f"   Open this URL in your browser!\n")
+        print(f"\n🚀 Web UI: http://localhost:{port}\n")
         app.run(host='0.0.0.0', port=port, debug=False, threaded=True)
 
 if __name__ == '__main__':
