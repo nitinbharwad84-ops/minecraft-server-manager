@@ -236,35 +236,48 @@ def api_settings_update():
     except Exception as e:
         return jsonify({'success': False, 'error': str(e)}), 500
 
-def run_server(port=5000, public=False):
+def run_server(port=5000):
     """Run Flask server"""
     import os
-    
-    # Check if running in Colab
-    is_colab = 'COLAB_GPU' in os.environ or 'COLAB_TPU_ADDR' in os.environ
-    
+    from threading import Thread
+
+    is_colab = os.path.exists('/content')
+
     if is_colab:
-        print("\n" + "="*70)
-        print("🌐 COLAB: The server is starting on port", port)
-        print("="*70)
-        print("\n📱 TO ACCESS THE WEB UI:")
-        print(f"\n   1. Look for the 🔗 link that appears after 'Running on...'")
-        print(f"   2. Click the link or copy the URL")
-        print(f"   3. Colab will automatically create a public URL for you!")
-        print("\n   Alternative: After server starts, you'll see a URL like:")
+        # Start Flask in a background thread so the cell doesn't block
+        thread = Thread(target=lambda: app.run(host='0.0.0.0', port=port, debug=False, threaded=True), daemon=True)
+        thread.start()
+
+        import time
+        time.sleep(2)  # Wait for server to start
+
+        # Use Colab's built-in proxy
+        from google.colab import output
+        print("\n" + "=" * 60)
+        print("✅ WEB UI IS READY!")
+        print("=" * 60)
+        print(f"\n🌐 Opening dashboard in a new tab...\n")
+        output.serve_kernel_port_as_window(port, path='/')
+        print(f"📱 If the window didn't open, click this link:")
         print(f"   https://localhost:{port}")
-        print("   Colab will convert this to a public URL automatically.\n")
-        print("="*70 + "\n")
+        print(f"\n💡 Or run this in a NEW cell to open it:")
+        print(f'   from google.colab import output')
+        print(f'   output.serve_kernel_port_as_window({port})')
+        print("\n⚠️  Keep THIS cell running! Stopping it kills the server.")
+        print("=" * 60)
+
+        # Keep the cell alive
+        try:
+            while True:
+                time.sleep(1)
+        except KeyboardInterrupt:
+            print("\n👋 Server stopped.")
     else:
         print(f"\n🚀 Starting web server on http://localhost:{port}")
         print(f"   Open this URL in your browser!\n")
-    
-    # Enable auto-reload in development
-    app.run(host='0.0.0.0', port=port, debug=False, threaded=True)
+        app.run(host='0.0.0.0', port=port, debug=False, threaded=True)
 
 if __name__ == '__main__':
     import sys
-    port = 5000
-    public = '--public' in sys.argv
-    
-    run_server(port=port, public=public)
+    port = int(sys.argv[sys.argv.index('--port') + 1]) if '--port' in sys.argv else 5000
+    run_server(port=port)
