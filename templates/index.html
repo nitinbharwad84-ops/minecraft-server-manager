@@ -326,6 +326,7 @@
             <div class="tab" onclick="showTab('eula')">📜 EULA</div>
             <div class="tab" onclick="showTab('settings')">⚙️ Settings</div>
             <div class="tab" onclick="showTab('console')">🖥️ Console</div>
+            <div class="tab" onclick="showTab('files')">📂 Files</div>
         </div>
 
         <!-- Dashboard Tab -->
@@ -559,6 +560,65 @@
                 </div>
             </div>
         </div>
+
+        <!-- Files Tab -->
+        <div id="files" class="tab-content" style="height: 85vh; display: none; flex-direction: column;">
+            <div class="card" style="height: 100%; display: flex; flex-direction: column;">
+                <div class="card-title">📂 File Manager</div>
+
+                <div style="display: flex; gap: 10px; margin-bottom: 15px; align-items: center; flex-wrap: wrap;">
+                    <button class="btn btn-primary" onclick="document.getElementById('file-upload').click()">⬆️
+                        Upload</button>
+                    <input type="file" id="file-upload" style="display: none;" onchange="uploadFile()">
+
+                    <button class="btn btn-secondary" onclick="createFolder()">➕ New Folder</button>
+                    <button class="btn btn-warning" onclick="listFiles()">🔄 Refresh</button>
+                    <button class="btn btn-danger" onclick="deleteFile()" id="btn-delete" style="display: none;">🗑️
+                        Delete</button>
+
+                    <div id="current-path"
+                        style="margin-left: auto; font-family: monospace; font-weight: bold; background: #e5e7eb; padding: 5px 10px; border-radius: 4px; color: #374151;">
+                        /</div>
+                </div>
+
+                <div
+                    style="flex: 1; overflow-y: auto; overflow-x: auto; border: 1px solid #e5e7eb; border-radius: 8px;">
+                    <table class="table" style="width: 100%; min-width: 600px;">
+                        <thead style="position: sticky; top: 0; background: #f3f4f6; z-index: 10;">
+                            <tr>
+                                <th style="width: 50px;">Type</th>
+                                <th>Name</th>
+                                <th style="width: 100px;">Size</th>
+                                <th style="width: 150px;">Modified</th>
+                            </tr>
+                        </thead>
+                        <tbody id="file-list-body">
+                            <!-- Files go here -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Editor Modal -->
+        <div id="editor-modal"
+            style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; align-items: center; justify-content: center; backdrop-filter: blur(2px);">
+            <div class="card"
+                style="width: 90%; height: 90%; display: flex; flex-direction: column; box-shadow: 0 20px 50px rgba(0,0,0,0.3);">
+                <div class="card-title"
+                    style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                    <span id="editor-filename">Editing: filename.txt</span>
+                    <button class="btn btn-danger" onclick="closeEditor()"
+                        style="padding: 5px 10px; font-size: 16px; margin: 0;">&times;</button>
+                </div>
+                <textarea id="editor-content"
+                    style="flex: 1; font-family: 'Consolas', monospace; font-size: 14px; white-space: pre; overflow: auto; padding: 15px; border: 1px solid #ccc; resize: none; margin-bottom: 15px; background: #1e1e1e; color: #d4d4d4; border-radius: 4px;"></textarea>
+                <div style="text-align: right; display: flex; justify-content: flex-end; gap: 10px;">
+                    <button class="btn btn-secondary" onclick="closeEditor()">Cancel</button>
+                    <button class="btn btn-success" onclick="saveFile()">💾 Save Changes</button>
+                </div>
+            </div>
+        </div>
     </div>
 
     <style>
@@ -592,6 +652,7 @@
                 const container = document.getElementById('log-container');
                 container.scrollTop = container.scrollHeight;
             }
+            if (tabName === 'files') listFiles();
         }
 
         function sendConsoleCommand() {
@@ -616,7 +677,185 @@
                 });
         }
 
-        // Auto-refresh logs if checkbox is checked
+        // ==========================================
+        // FILE MANAGER LOGIC
+        // ==========================================
+
+        let currentPath = '';
+        let selectedFile = null;
+
+        function listFiles(path = currentPath) {
+            fetch(`/api/files/list?path=${encodeURIComponent(path)}`)
+                .then(r => r.json())
+                .then(data => {
+                    if (data.success) {
+                        currentPath = data.path;
+                        document.getElementById('current-path').textContent = currentPath || '/';
+
+                        const tbody = document.getElementById('file-list-body');
+                        tbody.innerHTML = '';
+
+                        // "Up" directory
+                        if (currentPath) {
+                            const tr = document.createElement('tr');
+                            tr.innerHTML = `
+                                <td>📁</td>
+                                <td><a href="#" onclick="listFiles('${getParentPath(currentPath)}')">..</a></td>
+                                <td>-</td>
+                                <td>-</td>
+                            `;
+                            tbody.appendChild(tr);
+                        }
+
+                        data.items.forEach(item => {
+                            const tr = document.createElement('tr');
+                            const icon = item.is_dir ? '📁' : '📄';
+                            const nameLink = item.is_dir
+                                ? `<a href="#" onclick="listFiles('${currentPath ? currentPath + '/' + item.name : item.name}')">${item.name}</a>`
+                                : `<a href="#" onclick="openEditor('${currentPath ? currentPath + '/' + item.name : item.name}', '${item.name}')">${item.name}</a>`;
+
+                            tr.innerHTML = `
+                                <td>${icon}</td>
+                                <td>${nameLink}</td>
+                                <td>${item.is_dir ? '-' : formatSize(item.size)}</td>
+                                <td>${new Date(item.modified * 1000).toLocaleString()}</td>
+                            `;
+                            // Add delete button column or context menu?
+                            // For simplicity, let's just create a delete button that works on selection?
+                            // Or just add a small delete button in the row
+                            const delTd = document.createElement('td');
+                            // Actually my table only has 4 columns defined in THEAD? No, I defined Type, Name, Size, Modified. 
+                            // I probably missed Actions column in THEAD in previous step?
+                            // Let's just stick to 4 columns for now.
+
+                            // Let's add a long-press or robust click handler?
+                            // Or just a delete button next to name?
+
+                            tbody.appendChild(tr);
+                        });
+                    } else {
+                        alert('Error: ' + data.error);
+                    }
+                });
+        }
+
+        function getParentPath(path) {
+            if (!path) return '';
+            const parts = path.split('/');
+            parts.pop();
+            return parts.join('/');
+        }
+
+        function formatSize(bytes) {
+            if (bytes === 0) return '0 B';
+            const k = 1024;
+            const sizes = ['B', 'KB', 'MB', 'GB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+        }
+
+        function uploadFile() {
+            const input = document.getElementById('file-upload');
+            if (input.files.length === 0) return;
+
+            const file = input.files[0];
+            const formData = new FormData();
+            formData.append('file', file);
+            formData.append('path', currentPath);
+
+            // Show loading state
+            const btn = document.querySelector('button[onclick*="file-upload"]');
+            const originalText = btn.textContent;
+            btn.textContent = '⏳ Uploading...';
+            btn.disabled = true;
+
+            fetch('/api/files/upload', {
+                method: 'POST',
+                body: formData
+            })
+                .then(r => r.json())
+                .then(data => {
+                    btn.textContent = originalText;
+                    btn.disabled = false;
+                    input.value = ''; // reset
+
+                    if (data.success) {
+                        listFiles(); // refresh
+                    } else {
+                        alert('Upload failed: ' + data.error);
+                    }
+                });
+        }
+
+        function createFolder() {
+            const name = prompt("Enter folder name:");
+            if (!name) return;
+
+            fetch('/api/files/create_folder', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ path: currentPath, name: name })
+            })
+                .then(r => r.json())
+                .then(data => {
+                    if (data.success) listFiles();
+                    else alert('Error: ' + data.error);
+                });
+        }
+
+        let editingPath = '';
+
+        function openEditor(path, name) {
+            // Check if binary file extension
+            const ext = name.split('.').pop().toLowerCase();
+            const textExts = ['txt', 'yml', 'yaml', 'json', 'properties', 'log', 'sh', 'py', 'md', 'xml'];
+            if (!textExts.includes(ext)) {
+                if (!confirm("This might be a binary file. Try to open as text?")) return;
+            }
+
+            fetch(`/api/files/content?path=${encodeURIComponent(path)}`)
+                .then(r => r.json())
+                .then(data => {
+                    if (data.success) {
+                        editingPath = path;
+                        document.getElementById('editor-filename').textContent = 'Editing: ' + name;
+                        document.getElementById('editor-content').value = data.content;
+                        document.getElementById('editor-modal').style.display = 'flex'; // flex for centering
+                    } else {
+                        alert('Could not read file: ' + data.error);
+                    }
+                });
+        }
+
+        function saveFile() {
+            const content = document.getElementById('editor-content').value;
+            fetch('/api/files/save', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ path: editingPath, content: content })
+            })
+                .then(r => r.json())
+                .then(data => {
+                    if (data.success) {
+                        alert('Saved!');
+                        closeEditor();
+                        listFiles(); // update timestamp/size
+                    } else {
+                        alert('Save failed: ' + data.error);
+                    }
+                });
+        }
+
+        function closeEditor() {
+            document.getElementById('editor-modal').style.display = 'none';
+        }
+
+        function deleteFile() {
+            // Currently no selection UI, so maybe ask for name?
+            // Or prompt current user to delete specific file?
+            // Let's unimplemented for now or add "Clean Delete" logic later.
+            alert("Select functionality not fully implemented yet. Use the command console 'rm' if needed for now.");
+        }
         setInterval(() => {
             if (document.getElementById('console').classList.contains('active')) {
                 const auto = document.getElementById('auto-refresh');

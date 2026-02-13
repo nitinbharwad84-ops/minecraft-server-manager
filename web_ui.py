@@ -369,6 +369,141 @@ def api_tunnel_status():
     return jsonify(tunnel_mgr.get_status())
 
 # ============================================================================
+# FILE MANAGER API
+# ============================================================================
+
+def safe_join(path):
+    """Ensure path is within server directory"""
+    # Create server dir if not explicitly existing to avoid errors, though it should
+    if not os.path.exists("server"):
+        os.makedirs("server")
+    base = os.path.abspath("server")
+    # Handle empty path as root
+    if not path or path == '.' or path == '/':
+        target = base
+    else:
+        target = os.path.abspath(os.path.join(base, path.strip("/")))
+    
+    if not target.startswith(base):
+        raise ValueError("Access denied: Path outside server directory")
+    return target
+
+@app.route('/api/files/list')
+def api_files_list():
+    try:
+        path_param = request.args.get('path', '')
+        full_path = safe_join(path_param)
+        
+        if not os.path.exists(full_path):
+            return jsonify({'success': False, 'error': 'Path does not exist'})
+            
+        items = []
+        for entry in os.scandir(full_path):
+            stat = entry.stat()
+            items.append({
+                'name': entry.name,
+                'is_dir': entry.is_dir(),
+                'size': stat.st_size,
+                'modified': stat.st_mtime
+            })
+            
+        # Sort: directories first, then alphabetical
+        items.sort(key=lambda x: (not x['is_dir'], x['name'].lower()))
+        
+        return jsonify({'success': True, 'items': items, 'path': path_param})
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)})
+
+@app.route('/api/files/content')
+def api_files_content():
+    try:
+        path_param = request.args.get('path', '')
+        full_path = safe_join(path_param)
+        
+        if not os.path.isfile(full_path):
+            return jsonify({'success': False, 'error': 'File not found'})
+            
+        # Check size (limit to 1MB for editing)
+        if os.path.getsize(full_path) > 1024 * 1024:
+            return jsonify({'success': False, 'error': 'File too large to edit'})
+            
+        with open(full_path, 'r', encoding='utf-8', errors='replace') as f:
+            content = f.read()
+            
+        return jsonify({'success': True, 'content': content})
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)})
+
+@app.route('/api/files/save', methods=['POST'])
+def api_files_save():
+    try:
+        data = request.json
+        path_param = data.get('path', '')
+        content = data.get('content', '')
+        full_path = safe_join(path_param)
+        
+        with open(full_path, 'w', encoding='utf-8') as f:
+            f.write(content)
+            
+        return jsonify({'success': True})
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)})
+
+@app.route('/api/files/delete', methods=['POST'])
+def api_files_delete():
+    try:
+        data = request.json
+        path_param = data.get('path', '')
+        full_path = safe_join(path_param)
+        
+        if os.path.isdir(full_path):
+            import shutil
+            shutil.rmtree(full_path)
+        else:
+            os.remove(full_path)
+            
+        return jsonify({'success': True})
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)})
+
+@app.route('/api/files/upload', methods=['POST'])
+def api_files_upload():
+    try:
+        path_param = request.form.get('path', '')
+        file = request.files.get('file')
+        
+        if not file:
+            return jsonify({'success': False, 'error': 'No file provided'})
+        
+        # Ensure path exists
+        upload_dir = safe_join(path_param)
+        if not os.path.exists(upload_dir):
+            os.makedirs(upload_dir)
+            
+        full_path = os.path.join(upload_dir, file.filename)
+        file.save(full_path)
+        
+        return jsonify({'success': True})
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)})
+
+@app.route('/api/files/create_folder', methods=['POST'])
+def api_files_create_folder():
+    try:
+        path_param = request.json.get('path', '')
+        name = request.json.get('name', '')
+        if not name:
+             return jsonify({'success': False, 'error': 'Folder name required'})
+
+        parent_dir = safe_join(path_param)
+        full_path = os.path.join(parent_dir, name)
+        
+        os.makedirs(full_path, exist_ok=True)
+        return jsonify({'success': True})
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)})
+
+# ============================================================================
 # SERVER RUNNER
 # ============================================================================
 
