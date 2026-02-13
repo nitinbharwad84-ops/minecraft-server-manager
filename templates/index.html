@@ -325,7 +325,7 @@
             <div class="tab" onclick="showTab('java')">☕ Java</div>
             <div class="tab" onclick="showTab('eula')">📜 EULA</div>
             <div class="tab" onclick="showTab('settings')">⚙️ Settings</div>
-            <div class="tab" onclick="showTab('logs')">📋 Logs</div>
+            <div class="tab" onclick="showTab('console')">🖥️ Console</div>
         </div>
 
         <!-- Dashboard Tab -->
@@ -364,14 +364,7 @@
                 </div>
             </div>
 
-            <div class="card">
-                <div class="card-title">💬 Send Command</div>
-                <div class="command-input-group">
-                    <input type="text" id="command-input" placeholder="Type command (e.g., say Hello)..."
-                        onkeypress="if(event.key==='Enter') sendCommand()">
-                    <button class="btn btn-primary" onclick="sendCommand()">Send</button>
-                </div>
-            </div>
+
 
             <div class="card">
                 <div class="card-title">🔗 Connect (Public Access)</div>
@@ -535,18 +528,46 @@
             </div>
         </div>
 
-        <!-- Logs Tab -->
-        <div id="logs" class="tab-content">
-            <div class="card">
-                <div class="card-title">📋 Server Logs</div>
-                <button class="btn btn-primary" onclick="refreshLogs()" style="margin-bottom: 15px;">🔄 Refresh
-                    Logs</button>
-                <div class="log-container" id="log-container">
-                    <div class="log-line">No logs available yet...</div>
+        <!-- Console Tab -->
+        <div id="console" class="tab-content" style="display: none; height: 85vh; flex-direction: column;">
+            <div class="card" style="display: flex; flex-direction: column; height: 100%; margin-bottom: 0;">
+                <div class="card-title">🖥️ Server Console</div>
+
+                <div style="display: flex; gap: 10px; margin-bottom: 10px;">
+                    <button class="btn btn-primary" onclick="refreshLogs()" style="margin: 0;">🔄 Refresh Logs</button>
+                    <label style="display: flex; align-items: center; gap: 5px; font-size: 13px;">
+                        <input type="checkbox" id="auto-refresh" checked> Auto-refresh (5s)
+                    </label>
+                </div>
+
+                <!-- Logs Container -->
+                <div class="log-container" id="log-container"
+                    style="flex: 1; min-height: 400px; margin-bottom: 15px; font-family: 'Consolas', 'Monaco', monospace; font-size: 14px; background: #1a1b26; color: #a9b1d6; border-radius: 8px; padding: 10px; overflow-y: auto;">
+                    <div class="log-line">Waiting for logs...</div>
+                </div>
+
+                <!-- Command Input Area -->
+                <div style="background: #f3f4f6; padding: 10px; border-radius: 8px; border: 1px solid #e5e7eb;">
+                    <div class="command-input-group" style="display: flex; gap: 10px;">
+                        <span style="font-size: 20px; align-self: center; color: #6b7280;">>_</span>
+                        <input type="text" id="console-input" placeholder="Type command (e.g. op playername)..."
+                            style="flex: 1; font-family: monospace; font-size: 16px; padding: 10px; margin: 0;"
+                            onkeypress="if(event.key==='Enter') sendConsoleCommand()">
+                        <button class="btn btn-primary" onclick="sendConsoleCommand()"
+                            style="margin: 0; padding: 0 25px;">Send</button>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
+
+    <style>
+        #console.active {
+            display: flex !important;
+            flex-direction: column;
+            height: 85vh;
+        }
+    </style>
 
     <script>
         // Tab switching
@@ -554,15 +575,56 @@
             document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
             document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
 
-            event.target.classList.add('active');
-            document.getElementById(tabName).classList.add('active');
+            // Handle nav button active state
+            const btn = Array.from(document.querySelectorAll('.tab')).find(t => t.textContent.includes(tabName.charAt(0).toUpperCase() + tabName.slice(1)) || (tabName === 'console' && t.textContent.includes('Console')));
+            if (btn) btn.classList.add('active');
+
+            const content = document.getElementById(tabName);
+            if (content) content.classList.add('active');
 
             // Load tab-specific data
             if (tabName === 'java') loadJavaVersions();
             if (tabName === 'eula') checkEULAStatus();
             if (tabName === 'settings') loadSettings();
-            if (tabName === 'logs') refreshLogs();
+            if (tabName === 'console') {
+                refreshLogs();
+                // Scroll to bottom
+                const container = document.getElementById('log-container');
+                container.scrollTop = container.scrollHeight;
+            }
         }
+
+        function sendConsoleCommand() {
+            const input = document.getElementById('console-input');
+            const cmd = input.value.trim();
+            if (!cmd) return;
+
+            input.value = ''; // clear immediately
+
+            fetch('/api/command', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ command: cmd })
+            })
+                .then(r => r.json())
+                .then(data => {
+                    if (data.success) {
+                        refreshLogs();
+                    } else {
+                        alert('Error: ' + data.error);
+                    }
+                });
+        }
+
+        // Auto-refresh logs if checkbox is checked
+        setInterval(() => {
+            if (document.getElementById('console').classList.contains('active')) {
+                const auto = document.getElementById('auto-refresh');
+                if (auto && auto.checked) {
+                    refreshLogs();
+                }
+            }
+        }, 5000);
 
         // Auto-refresh status every 3 seconds
         setInterval(updateStatus, 3000);

@@ -330,13 +330,26 @@ class TunnelManager:
                 if match:
                     self.claim_url = match.group(0)
             
-            # Check for public address
-            # Log format varies, look for .gl.joinmc.link or similar
-            if '.gl.joinmc.link' in clean_line or '.pl.local' in clean_line or 'tunnel address' in clean_line.lower():
-                 pass # Currently playit might not print final address in clear text easily on new versions without claim
+            # Check for generic success message with address
+            # Example: "tunnel running at: grand-mountain.gl.joinmc.link"
+            # Example: "public address: ... details ..."
+            lower_line = clean_line.lower()
+            
+            # Pattern 1: Standard playit domains
+            import re
+            domain_match = re.search(r'([a-z0-9-]+\.(?:gl\.joinmc\.link|ply\.gg|playit\.gg|gl\.at\.ply\.gg))', clean_line)
+            if domain_match:
+                self.public_address = domain_match.group(1)
+                print(f"🎯 FOUND ADDRESS: {self.public_address}") # Print to visible console for debugging
 
-            # Keep looking for address in specialized format if updated
-    
+            # Pattern 2: "tunnel address: <ADDRESS>"
+            if "tunnel address" in lower_line:
+                parts = clean_line.split("address")
+                if len(parts) > 1:
+                    candidate = parts[1].strip().strip(":").strip()
+                    if "." in candidate:
+                        self.public_address = candidate
+            
     def get_status(self):
         return {
             'running': self.process is not None and self.process.poll() is None,
