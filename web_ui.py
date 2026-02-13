@@ -507,72 +507,134 @@ def api_files_create_folder():
 # SERVER RUNNER
 # ============================================================================
 
+# ============================================================================
+# UNIVERSAL LAUNCHER
+# ============================================================================
+
+# ============================================================================
+# UNIVERSAL LAUNCHER (CLOUDFLARE TUNNEL MODE)
+# ============================================================================
+
 def run_server(port=5000):
-    """Run Flask server"""
+    """
+    Universal runner that ALWAYS uses Cloudflare Tunnel to provide a public URL.
+    Works on: Local, Colab, Codespaces, IDX, Replit, Docker, VPS.
+    """
     import os
+    import sys
     from threading import Thread
-
-    is_colab = os.path.exists('/content')
-
-    if is_colab:
-        # Start Flask in background thread
-        thread = Thread(
-            target=lambda: app.run(host='127.0.0.1', port=port, debug=False, threaded=True),
-            daemon=True
-        )
-        thread.start()
-
-        import time, subprocess, re
-        time.sleep(2)
-
-        # Install cloudflared (free, no account needed)
-        print("🔧 Setting up tunnel (free, no signup needed)...")
-        subprocess.run(
-            ["wget", "-q", "https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-amd64", "-O", "/usr/local/bin/cloudflared"],
-            check=True, capture_output=True
-        )
-        subprocess.run(["chmod", "+x", "/usr/local/bin/cloudflared"], check=True, capture_output=True)
-
-        # Start cloudflared tunnel
-        proc = subprocess.Popen(
-            ["/usr/local/bin/cloudflared", "tunnel", "--url", f"http://127.0.0.1:{port}"],
-            stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True
-        )
-
-        # Wait for the public URL
-        public_url = None
-        for _ in range(30):
-            line = proc.stderr.readline()
-            match = re.search(r'(https://[a-zA-Z0-9\-]+\.trycloudflare\.com)', line)
-            if match:
-                public_url = match.group(1)
-                break
-            time.sleep(0.5)
-
-        if public_url:
-            print("\n" + "=" * 60)
-            print("✅ WEB UI IS READY!")
-            print("=" * 60)
-            print(f"\n🌐 OPEN THIS LINK IN YOUR BROWSER:\n")
-            print(f"   {public_url}")
-            print(f"\n📱 Works on phone too! Share with anyone!")
-            print(f"\n⚠️  Keep this cell running!")
-            print("=" * 60 + "\n")
-        else:
-            print(f"\n⚠️  Tunnel setup failed. Try: http://localhost:{port}")
-
-        # Keep alive
-        try:
-            while True:
-                time.sleep(1)
-        except KeyboardInterrupt:
-            proc.kill()
-            print("\n👋 Server stopped.")
-    else:
-        print(f"\n🚀 Web UI: http://localhost:{port}\n")
+    import time
+    
+    # allow disabling tunnel via env var if really needed
+    if os.environ.get('NO_TUNNEL'):
+        print(f"\n🚀 Running Locally (Tunnel Disabled)")
         app.run(host='0.0.0.0', port=port, debug=False, threaded=True)
+        return
+
+    print(f"\n🚀 Initializing Server Manager...")
+    
+    # 1. Start Flask in background thread
+    print("   -> Starting Web Server on port", port)
+    Thread(target=lambda: app.run(host='127.0.0.1', port=port, debug=False, threaded=True), daemon=True).start()
+    
+    # Give it a moment to bind
+    time.sleep(2)
+    
+    # 2. Start Cloudflare Tunnel
+    start_cloudflared_tunnel(port)
+    
+    # 3. Keep main thread alive
+    keep_alive()
+
+def start_cloudflared_tunnel(port):
+    """Downloads and starts cloudflared for free tunneling"""
+    import subprocess
+    import re
+    import time
+    import platform
+    import shutil
+    
+    print("   -> Setting up Cloudflare Tunnel...")
+    
+    # Determine binary name
+    system = platform.system()
+    binary_name = "cloudflared.exe" if system == "Windows" else "cloudflared"
+    
+    # Download if missing
+    if not os.path.exists(binary_name) and not shutil.which(binary_name):
+        print("      Downloading cloudflared...")
+        if system == "Windows":
+            url = "https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-windows-amd64.exe"
+            subprocess.run(["curl", "-L", url, "-o", binary_name], check=True)
+        elif system == "Darwin": # Mac
+             url = "https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-darwin-amd64"
+             subprocess.run(["curl", "-L", url, "-o", binary_name], check=True)
+             subprocess.run(["chmod", "+x", binary_name], check=True)
+        else: # Linux
+            url = "https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-amd64" 
+            subprocess.run(["wget", "-q", url, "-O", binary_name], check=True)
+            subprocess.run(["chmod", "+x", binary_name], check=True)
+
+    # Use local binary or system binary
+    cmd = f"./{binary_name}" if os.path.exists(binary_name) else binary_name
+
+    # Start Tunnel
+    try:
+        proc = subprocess.Popen(
+            [cmd, "tunnel", "--url", f"http://127.0.0.1:{port}"],
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            text=True,
+            bufsize=1
+        )
+    except Exception as e:
+        print(f"❌ Failed to start cloudflared: {e}")
+        return
+    
+    print("   -> Connecting to Cloudflare network...")
+    public_url = None
+    
+    # Read stderr for the URL (it prints there)
+    # We read line by line until we find it
+    start_time = time.time()
+    while time.time() - start_time < 30: # 30s timeout
+        line = proc.stderr.readline()
+        if not line:
+            if proc.poll() is not None: break
+            continue
+            
+        # Extract URL: https://<random>.trycloudflare.com
+        match = re.search(r'(https://[a-zA-Z0-9-]+\.trycloudflare\.com)', line)
+        if match:
+            public_url = match.group(1)
+            break
+            
+    if public_url:
+        print("\n" + "=" * 60)
+        print("✅ SERVER MANAGER IS ONLINE!")
+        print("=" * 60)
+        print(f"\n🌐 DASHBOARD URL:  {public_url}")
+        print(f"\n📱 Share this link to manage the server from anywhere!")
+        print("=" * 60 + "\n")
+    else:
+        print("❌ Could not get Cloudflare URL. Check connectivity.")
+
+def keep_alive():
+    """Keep the script running"""
+    import time
+    try:
+        while True:
+            time.sleep(1)
+    except KeyboardInterrupt:
+        print("\n👋 Stopping...")
 
 if __name__ == '__main__':
     import sys
-    port = int(sys.argv[sys.argv.index('--port') + 1]) if '--port' in sys.argv else 5000
-    run_server(port=port)
+    # Allow port override
+    port = 5000
+    if len(sys.argv) > 1:
+        for i, arg in enumerate(sys.argv):
+            if arg == '--port' and i + 1 < len(sys.argv):
+                port = int(sys.argv[i+1])
+                
+    run_server(port)
