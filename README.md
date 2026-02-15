@@ -56,7 +56,7 @@ A powerful, terminal-based Minecraft server management tool built with [Textual]
 
 ```bash
 # Clone the repository
-git clone https://github.com/your-username/minecraft-server-manager.git
+git clone https://github.com/nitinbharwad84-ops/minecraft-server-manager.git
 cd minecraft-server-manager
 
 # Install dependencies
@@ -70,8 +70,7 @@ python main.py
 
 ```python
 # Run in a Colab cell
-!git clone https://github.com/your-username/minecraft-server-manager.git
-%cd minecraft-server-manager
+!git clone https://github.com/nitinbharwad84-ops/minecraft-server-manager.git
 !pip install -r requirements.txt
 !python main.py --environment colab
 ```
@@ -80,8 +79,7 @@ python main.py
 
 ```bash
 # In the IDX terminal
-git clone https://github.com/your-username/minecraft-server-manager.git
-cd minecraft-server-manager
+git clone https://github.com/nitinbharwad84-ops/minecraft-server-manager.git
 pip install -r requirements.txt
 python main.py --environment idx
 ```
