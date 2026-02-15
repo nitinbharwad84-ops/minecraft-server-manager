@@ -8,8 +8,64 @@ import asyncio
 import aiohttp
 from threading import Thread
 import os
+import shutil
+from pathlib import Path
+
+# ============================================================================
+# COLAB PERSISTENCE (Google Drive)
+# ============================================================================
+def setup_colab_persistence():
+    """Mounts Google Drive and symlinks server folder for persistence."""
+    if not os.path.exists('/content'):
+        return
+
+    print("\n🔄 Detected Google Colab Environment")
+    try:
+        from google.colab import drive
+        print("📂 Mounting Google Drive for server persistence...")
+        drive.mount('/content/drive')
+        
+        drive_server_path = Path("/content/drive/MyDrive/MinecraftServer")
+        local_server_path = Path("server").resolve()
+        
+        # 1. Create Drive folder if missing
+        if not drive_server_path.exists():
+            print(f"   -> Creating new server folder on Drive: {drive_server_path}")
+            drive_server_path.mkdir(parents=True, exist_ok=True)
+            
+        # 2. Handle local 'server' folder
+        if local_server_path.exists():
+            if local_server_path.is_symlink():
+                print("   -> Server folder is already linked.")
+                return
+            elif local_server_path.is_dir():
+                # Check if it has data we want to keep?
+                # For now, if Drive is empty, copy local -> Drive
+                if not any(drive_server_path.iterdir()):
+                    print("   -> Migrating initial server files to Drive...")
+                    for item in local_server_path.iterdir():
+                        if item.is_dir():
+                            shutil.copytree(item, drive_server_path / item.name)
+                        else:
+                            shutil.copy2(item, drive_server_path)
+                
+                # Remove local folder to replace with symlink
+                shutil.rmtree(local_server_path)
+        
+        # 3. Create Symlink
+        print(f"   -> Linking 'server' to Drive...")
+        os.symlink(drive_server_path, local_server_path)
+        print("✅ Persistence ENABLED! Your world is safe on Google Drive.")
+        
+    except Exception as e:
+        print(f"⚠️ Persistence Setup Failed: {e}")
+        print("   Server will run in temporary Colab storage (data lost on disconnect).")
+
+# Run setup BEFORE initializing ServerManager
+setup_colab_persistence()
 
 app = Flask(__name__)
+# Reload config just in case symlink changed paths
 sm = ServerManager('config.json')
 
 # ============================================================================

@@ -1012,10 +1012,16 @@
                 });
         }
 
-        function sendCommand() {
-            const input = document.getElementById('command-input');
+        function sendConsoleCommand() {
+            const input = document.getElementById('console-input');
             const cmd = input.value.trim();
             if (!cmd) return;
+
+            // Append to log immediately for feedback
+            const consoleDiv = document.getElementById('console-output');
+            // consoleDiv.textContent += `> ${cmd}\n`; // Optional local echo
+
+            input.value = ''; // Clear input
 
             fetch('/api/server/command', {
                 method: 'POST',
@@ -1025,8 +1031,9 @@
                 .then(r => r.json())
                 .then(data => {
                     if (data.success) {
-                        input.value = '';
-                        alert(`✅ Command sent: ${cmd}`);
+                        // Success message
+                        // alert(`✅ Command sent: ${cmd}`); // Too intrusive for console
+                        console.log("Command sent");
                     } else {
                         alert(`❌ Error: ${data.error}`);
                     }
