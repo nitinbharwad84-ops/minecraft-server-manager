@@ -62,7 +62,7 @@ All failures are due to **Windows filesystem quirks**:
 
 ### Option 2: URL 🔗
 ```
-https://codespaces.new/YOUR_USERNAME/minecraft-server-manager
+https://codespaces.new/nitinbharwad84-ops/minecraft-server-manager
 ```
 
 ---
