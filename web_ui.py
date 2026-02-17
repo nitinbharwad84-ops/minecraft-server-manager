@@ -54,8 +54,18 @@ def setup_colab_persistence():
         
         # 3. Create Symlink
         print(f"   -> Linking 'server' to Drive...")
-        os.symlink(drive_server_path, local_server_path)
-        print("✅ Persistence ENABLED! Your world is safe on Google Drive.")
+        # Force remove regular directory if it exists and wasn't removed above (safety)
+        if local_server_path.exists() and not local_server_path.is_symlink():
+            shutil.rmtree(local_server_path)
+            
+        if not local_server_path.exists():
+             os.symlink(drive_server_path, local_server_path)
+             
+        print("\n" + "="*50)
+        print("✅ GOOGLE DRIVE BACKUP ACTIVE")
+        print(f"📂 Location: {drive_server_path}")
+        print("💾 All server data is saved permanently to Drive.")
+        print("="*50 + "\n")
         
     except Exception as e:
         print(f"⚠️ Persistence Setup Failed: {e}")
