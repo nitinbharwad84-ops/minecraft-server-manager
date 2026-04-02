@@ -255,8 +255,15 @@ def show_status(sm):
 def main():
     """Main CLI loop"""
     print_header()
+
+    # Google Drive persistence (Colab only, no-op elsewhere)
+    try:
+        from web_ui import setup_colab_persistence
+        setup_colab_persistence()
+    except Exception:
+        pass
+
     print("Loading server manager...")
-    
     sm = ServerManager('config.json')
     print("✅ Server manager loaded!")
     

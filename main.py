@@ -289,6 +289,13 @@ def run_headless(args: argparse.Namespace) -> None:
 def main() -> None:
     args = parse_args()
 
+    # ── Google Drive persistence (Colab only, no-op elsewhere) ──
+    try:
+        from web_ui import setup_colab_persistence
+        setup_colab_persistence()
+    except Exception:
+        pass
+
     if args.type or args.version or args.ram:
         cfg_path = Path(args.config)
         config = json.loads(cfg_path.read_text()) if cfg_path.exists() else {"server": {}}
