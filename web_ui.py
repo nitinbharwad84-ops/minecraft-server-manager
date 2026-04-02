@@ -11,75 +11,25 @@ import os
 import shutil
 from pathlib import Path
 
-# ============================================================================
-# COLAB PERSISTENCE (Google Drive)
-# ============================================================================
-def setup_colab_persistence():
-    """Mounts Google Drive and symlinks server folder for persistence."""
-    if not os.path.exists('/content'):
-        return
-
-    print("\n🔄 Detected Google Colab Environment")
-    try:
-        from google.colab import drive
-        print("📂 Mounting Google Drive for server persistence...")
-        drive.mount('/content/drive', force_remount=True)
-
-        drive_server_path = Path("/content/drive/MyDrive/MinecraftServer")
-        # Always use absolute path anchored to script location, not cwd
-        script_dir = Path(__file__).resolve().parent
-        local_server_path = script_dir / "server"
-
-        # 1. Create Drive folder if missing
-        drive_server_path.mkdir(parents=True, exist_ok=True)
-
-        # 2. Fix broken or wrong symlink
-        if local_server_path.is_symlink():
-            if local_server_path.resolve() == drive_server_path.resolve():
-                print("   -> Drive already linked correctly ✅")
-                _print_drive_active(drive_server_path)
-                return
-            else:
-                print("   -> Removing stale symlink...")
-                local_server_path.unlink()
-
-        # 3. If a real local folder exists, migrate its contents to Drive first
-        if local_server_path.exists() and local_server_path.is_dir():
-            if not any(drive_server_path.iterdir()):
-                print("   -> Migrating existing server files to Drive...")
-                for item in local_server_path.iterdir():
-                    dest = drive_server_path / item.name
-                    if not dest.exists():
-                        if item.is_dir():
-                            shutil.copytree(item, dest)
-                        else:
-                            shutil.copy2(item, dest)
-            print("   -> Removing local server folder...")
-            shutil.rmtree(local_server_path)
-
-        # 4. Create symlink  local/server -> Drive
-        print(f"   -> Linking '{local_server_path}' -> '{drive_server_path}'")
-        os.symlink(drive_server_path, local_server_path)
-
-        _print_drive_active(drive_server_path)
-
-    except Exception as e:
-        print(f"⚠️ Persistence Setup Failed: {e}")
-        print("   Server will run in temporary Colab storage (data lost on disconnect).")
-
-def _print_drive_active(path):
-    print("\n" + "="*50)
-    print("✅ GOOGLE DRIVE BACKUP ACTIVE")
-    print(f"📂 Location: {path}")
-    print("💾 All server data is saved permanently to Drive.")
-    print("="*50 + "\n")
-
-# Always run from the script's own directory so all relative paths resolve correctly
+# Always run from the script's own directory so all relative paths resolve correctly.
+# When the repo lives on Google Drive this will be something like:
+#   /content/drive/MyDrive/MinecraftServer/minecraft-server-manager
+# so every ./server, ./java, config.json etc. goes straight to Drive.
 _SCRIPT_DIR = Path(__file__).resolve().parent
 os.chdir(_SCRIPT_DIR)
 
-# Run setup BEFORE initializing ServerManager
-setup_colab_persistence()
+# ── Colab: print a clear message so the user knows where data is stored ──
+if os.path.exists('/content'):
+    if str(_SCRIPT_DIR).startswith('/content/drive'):
+        print("\n" + "="*55)
+        print("✅ RUNNING FROM GOOGLE DRIVE — ALL DATA IS PERSISTENT")
+        print(f"📂 Location: {_SCRIPT_DIR}")
+        print("💾 World, plugins, configs saved permanently to Drive.")
+        print("="*55 + "\n")
+    else:
+        print("\n⚠️  WARNING: repo is NOT on Google Drive.")
+        print("   Use the Colab launch cell to clone the repo to Drive.")
+        print("   Data will be LOST when this session ends.\n")
 
 app = Flask(__name__)
 sm = ServerManager(str(_SCRIPT_DIR / 'config.json'))
