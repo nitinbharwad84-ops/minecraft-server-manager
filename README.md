@@ -80,8 +80,8 @@ python main.py
 ```bash
 # In the IDX terminal
 git clone https://github.com/nitinbharwad84-ops/minecraft-server-manager.git
-pip install -r requirements.txt
-python main.py --environment idx
+pip install -r minecraft-server-manager/requirements.txt
+python minecraft-server-manager/main.py --environment idx
 ```
 
 ---
