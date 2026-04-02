@@ -74,12 +74,15 @@ def _print_drive_active(path):
     print("💾 All server data is saved permanently to Drive.")
     print("="*50 + "\n")
 
+# Always run from the script's own directory so all relative paths resolve correctly
+_SCRIPT_DIR = Path(__file__).resolve().parent
+os.chdir(_SCRIPT_DIR)
+
 # Run setup BEFORE initializing ServerManager
 setup_colab_persistence()
 
 app = Flask(__name__)
-# Reload config just in case symlink changed paths
-sm = ServerManager('config.json')
+sm = ServerManager(str(_SCRIPT_DIR / 'config.json'))
 
 # ============================================================================
 # API ENDPOINTS
@@ -439,10 +442,10 @@ def api_tunnel_status():
 
 def safe_join(path):
     """Ensure path is within server directory"""
-    # Create server dir if not explicitly existing to avoid errors, though it should
-    if not os.path.exists("server"):
-        os.makedirs("server")
-    base = os.path.abspath("server")
+    server_dir = str(_SCRIPT_DIR / 'server')
+    if not os.path.exists(server_dir):
+        os.makedirs(server_dir)
+    base = os.path.abspath(server_dir)
     # Handle empty path as root
     if not path or path == '.' or path == '/':
         target = base
