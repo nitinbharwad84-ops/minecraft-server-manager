@@ -23,53 +23,56 @@ def setup_colab_persistence():
     try:
         from google.colab import drive
         print("📂 Mounting Google Drive for server persistence...")
-        drive.mount('/content/drive')
-        
+        drive.mount('/content/drive', force_remount=True)
+
         drive_server_path = Path("/content/drive/MyDrive/MinecraftServer")
-        local_server_path = Path("server").resolve()
-        
+        # Always use absolute path anchored to script location, not cwd
+        script_dir = Path(__file__).resolve().parent
+        local_server_path = script_dir / "server"
+
         # 1. Create Drive folder if missing
-        if not drive_server_path.exists():
-            print(f"   -> Creating new server folder on Drive: {drive_server_path}")
-            drive_server_path.mkdir(parents=True, exist_ok=True)
-            
-        # 2. Handle local 'server' folder
-        if local_server_path.exists():
-            if local_server_path.is_symlink():
-                print("   -> Server folder is already linked.")
+        drive_server_path.mkdir(parents=True, exist_ok=True)
+
+        # 2. Fix broken or wrong symlink
+        if local_server_path.is_symlink():
+            if local_server_path.resolve() == drive_server_path.resolve():
+                print("   -> Drive already linked correctly ✅")
+                _print_drive_active(drive_server_path)
                 return
-            elif local_server_path.is_dir():
-                # Check if it has data we want to keep?
-                # For now, if Drive is empty, copy local -> Drive
-                if not any(drive_server_path.iterdir()):
-                    print("   -> Migrating initial server files to Drive...")
-                    for item in local_server_path.iterdir():
+            else:
+                print("   -> Removing stale symlink...")
+                local_server_path.unlink()
+
+        # 3. If a real local folder exists, migrate its contents to Drive first
+        if local_server_path.exists() and local_server_path.is_dir():
+            if not any(drive_server_path.iterdir()):
+                print("   -> Migrating existing server files to Drive...")
+                for item in local_server_path.iterdir():
+                    dest = drive_server_path / item.name
+                    if not dest.exists():
                         if item.is_dir():
-                            shutil.copytree(item, drive_server_path / item.name)
+                            shutil.copytree(item, dest)
                         else:
-                            shutil.copy2(item, drive_server_path)
-                
-                # Remove local folder to replace with symlink
-                shutil.rmtree(local_server_path)
-        
-        # 3. Create Symlink
-        print(f"   -> Linking 'server' to Drive...")
-        # Force remove regular directory if it exists and wasn't removed above (safety)
-        if local_server_path.exists() and not local_server_path.is_symlink():
+                            shutil.copy2(item, dest)
+            print("   -> Removing local server folder...")
             shutil.rmtree(local_server_path)
-            
-        if not local_server_path.exists():
-             os.symlink(drive_server_path, local_server_path)
-             
-        print("\n" + "="*50)
-        print("✅ GOOGLE DRIVE BACKUP ACTIVE")
-        print(f"📂 Location: {drive_server_path}")
-        print("💾 All server data is saved permanently to Drive.")
-        print("="*50 + "\n")
-        
+
+        # 4. Create symlink  local/server -> Drive
+        print(f"   -> Linking '{local_server_path}' -> '{drive_server_path}'")
+        os.symlink(drive_server_path, local_server_path)
+
+        _print_drive_active(drive_server_path)
+
     except Exception as e:
         print(f"⚠️ Persistence Setup Failed: {e}")
         print("   Server will run in temporary Colab storage (data lost on disconnect).")
+
+def _print_drive_active(path):
+    print("\n" + "="*50)
+    print("✅ GOOGLE DRIVE BACKUP ACTIVE")
+    print(f"📂 Location: {path}")
+    print("💾 All server data is saved permanently to Drive.")
+    print("="*50 + "\n")
 
 # Run setup BEFORE initializing ServerManager
 setup_colab_persistence()
@@ -94,10 +97,9 @@ def api_status():
         status = sm.get_server_status()
         resources = sm.get_system_resources()
         config = sm.get_server_config()
-        
         return jsonify({
             'success': True,
-            'status': status,
+            'status': status.to_dict(),
             'resources': resources,
             'config': config
         })
@@ -280,6 +282,7 @@ def api_server_restart():
         return jsonify({'success': False, 'error': str(e)}), 500
 
 @app.route('/api/server/command', methods=['POST'])
+@app.route('/api/command', methods=['POST'])  # alias used by web UI JS
 def api_server_command():
     """Send server command"""
     try:
@@ -287,9 +290,8 @@ def api_server_command():
         cmd = data.get('command', '')
         if not cmd:
             return jsonify({'success': False, 'error': 'No command provided'}), 400
-        
         result = sm.send_command(cmd)
-        return jsonify(result)
+        return jsonify({'success': result.success, 'message': result.message, 'error': result.error})
     except Exception as e:
         return jsonify({'success': False, 'error': str(e)}), 500
 
@@ -299,10 +301,7 @@ def api_server_logs():
     try:
         lines = int(request.args.get('lines', 50))
         logs = sm.get_log_tail(lines)
-        return jsonify({
-            'success': True,
-            'logs': logs
-        })
+        return jsonify({'success': True, 'logs': logs if isinstance(logs, list) else list(logs)})
     except Exception as e:
         return jsonify({'success': False, 'error': str(e)}), 500
 
@@ -310,8 +309,8 @@ def api_server_logs():
 def api_server_backup():
     """Create backup"""
     try:
-        result = sm.backup_world()
-        return jsonify(result)
+        result = sm.create_backup()
+        return jsonify({'success': result.success, 'message': result.message, 'error': result.error})
     except Exception as e:
         return jsonify({'success': False, 'error': str(e)}), 500
 

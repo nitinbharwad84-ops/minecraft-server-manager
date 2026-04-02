@@ -118,7 +118,6 @@ def build_settings(pane: TabPane, app: "MinecraftServerManagerApp") -> None:
     pane.mount(save_row)
     save_row.mount(Button("💾 Save Settings", id="set-save", classes="action-btn btn-primary"))
     save_row.mount(Button("↺ Reset to Defaults", id="set-reset", classes="action-btn btn-secondary"))
-    pane.mount(save_row)
     pane.mount(Label("", id="set-status"))
 
     # ── Event handling ──

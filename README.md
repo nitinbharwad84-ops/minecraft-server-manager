@@ -73,6 +73,22 @@ python main.py
 !git clone https://github.com/nitinbharwad84-ops/minecraft-server-manager.git
 !pip install -r requirements.txt
 !python main.py --environment colab
+
+# @title 🚀 Launch Minecraft Server Manager
+from google.colab import drive
+import os
+
+# Clone repo
+if not os.path.exists('/content/minecraft-server-manager'):
+    !git clone https://github.com/nitinbharwad84-ops/minecraft-server-manager.git
+%cd /content/minecraft-server-manager
+
+# Install deps
+!pip install -q -r requirements.txt
+
+# Launch Web UI (auto-mounts Drive + creates public URL)
+!python web_ui.py
+
 ```
 
 ### Google IDX
