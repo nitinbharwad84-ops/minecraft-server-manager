@@ -74,20 +74,52 @@ python main.py
 !pip install -r requirements.txt
 !python main.py --environment colab
 
-# @title 🚀 Launch Minecraft Server Manager
+# @title 🚀 Minecraft Server Manager - Launch
+import os, subprocess, sys
 from google.colab import drive
-import os
 
-# Clone repo
-if not os.path.exists('/content/minecraft-server-manager'):
-    !git clone https://github.com/nitinbharwad84-ops/minecraft-server-manager.git
-%cd /content/minecraft-server-manager
+# ── Step 1: Mount Google Drive ──────────────────────────────────────────────
+print("📂 Mounting Google Drive...")
+drive.mount('/content/drive', force_remount=True)
 
-# Install deps
-!pip install -q -r requirements.txt
+# ── Step 2: Paths ───────────────────────────────────────────────────────────
+DRIVE_DIR = "/content/drive/MyDrive/MinecraftServer/minecraft-server-manager"
+REPO_URL  = "https://github.com/nitinbharwad84-ops/minecraft-server-manager.git"
 
-# Launch Web UI (auto-mounts Drive + creates public URL)
-!python web_ui.py
+# ── Step 3: Clone repo to Drive (first time) or pull updates ────────────────
+if not os.path.exists(DRIVE_DIR):
+    print("📥 First time — cloning repo to Google Drive...")
+    os.makedirs("/content/drive/MyDrive/MinecraftServer", exist_ok=True)
+    subprocess.run(["git", "clone", REPO_URL, DRIVE_DIR], check=True)
+    print("✅ Repo cloned to Drive!")
+else:
+    print("🔄 Repo found on Drive — pulling latest updates...")
+    subprocess.run(["git", "-C", DRIVE_DIR, "pull"], check=True)
+
+# ── Step 4: Install dependencies ────────────────────────────────────────────
+print("\n📦 Installing dependencies...")
+subprocess.run(
+    [sys.executable, "-m", "pip", "install", "-r", f"{DRIVE_DIR}/requirements.txt"],
+    check=True
+)
+print("✅ Dependencies installed!")
+
+# ── Step 5: Launch with real-time output so Cloudflare URL is visible ───────
+print("\n🚀 Launching Web UI...\n")
+os.chdir(DRIVE_DIR)
+
+proc = subprocess.Popen(
+    [sys.executable, "-u", "web_ui.py"],
+    stdout=subprocess.PIPE,
+    stderr=subprocess.STDOUT,
+    text=True,
+    bufsize=1,
+    cwd=DRIVE_DIR
+)
+
+for line in proc.stdout:
+    print(line, end="", flush=True)
+
 
 ```
 
