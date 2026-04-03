@@ -571,30 +571,32 @@ def start_cloudflared_tunnel(port):
     import time
     import platform
     import shutil
-    
-    print("   -> Setting up Cloudflare Tunnel...")
-    
-    # Determine binary name
-    system = platform.system()
-    binary_name = "cloudflared.exe" if system == "Windows" else "cloudflared"
-    
-    # Download if missing
-    if not os.path.exists(binary_name) and not shutil.which(binary_name):
-        print("      Downloading cloudflared...")
-        if system == "Windows":
-            url = "https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-windows-amd64.exe"
-            subprocess.run(["curl", "-L", url, "-o", binary_name], check=True)
-        elif system == "Darwin": # Mac
-             url = "https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-darwin-amd64"
-             subprocess.run(["curl", "-L", url, "-o", binary_name], check=True)
-             subprocess.run(["chmod", "+x", binary_name], check=True)
-        else: # Linux
-            url = "https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-amd64" 
-            subprocess.run(["wget", "-q", url, "-O", binary_name], check=True)
-            subprocess.run(["chmod", "+x", binary_name], check=True)
+    import stat
 
-    # Use local binary or system binary
-    cmd = f"./{binary_name}" if os.path.exists(binary_name) else binary_name
+    print("   -> Setting up Cloudflare Tunnel...")
+
+    system = platform.system()
+
+    # Always download to /tmp so execute permission works (Drive blocks chmod)
+    if system == "Windows":
+        binary_path = os.path.join(os.environ.get("TEMP", "."), "cloudflared.exe")
+        url = "https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-windows-amd64.exe"
+    elif system == "Darwin":
+        binary_path = "/tmp/cloudflared"
+        url = "https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-darwin-amd64"
+    else:
+        binary_path = "/tmp/cloudflared"
+        url = "https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-amd64"
+
+    # Use system cloudflared if available, otherwise download to /tmp
+    cmd = shutil.which("cloudflared")
+    if not cmd:
+        if not os.path.exists(binary_path):
+            print("      Downloading cloudflared to /tmp...")
+            subprocess.run(["wget", "-q", url, "-O", binary_path], check=True)
+        # Ensure executable — /tmp always allows this unlike Google Drive
+        os.chmod(binary_path, os.stat(binary_path).st_mode | stat.S_IEXEC | stat.S_IXGRP | stat.S_IXOTH)
+        cmd = binary_path
 
     # Start Tunnel
     try:
